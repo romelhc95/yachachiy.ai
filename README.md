@@ -2,23 +2,23 @@
 
 Amauta.ai es una plataforma diseñada para centralizar y comparar ofertas educativas en Latinoamérica, comenzando por el mercado peruano.
 
-## Fase 1: Harvester Pilot (UTEC/UPC) - COMPLETED
+## Fase 1: Piloto de Recolección (UTEC/UPC) - COMPLETADA
 - [x] Estructura base del proyecto.
 - [x] Esquema inicial de PostgreSQL orientado a geolocalización.
 - [x] Scripts de recolección de datos iniciales.
-- [x] **8 programas de DATA capturados** (UTEC & UPC Pilot).
+- [x] **8 programas de DATA capturados** (Piloto UTEC & UPC).
 
-## Fase 2: FastAPI Backend & Security Audit - COMPLETED
-- [x] **Backend Core:** FastAPI application in `/api` with SQLAlchemy ORM.
-- [x] **Secure API:** Implemented `GET /courses` with filtering (name, mode, max_price).
-- [x] **Security Audit:** Standardized Pydantic validation and global exception handling (no error traces).
-- [x] **Automated Testing:** 100% test coverage for API endpoints with Pytest (`tests/test_fase2.py`).
-- [x] **Frontend Init:** Next.js 14 configurado en `/web` con Tailwind CSS y Shadcn/UI.
+## Fase 2: Backend FastAPI y Auditoría de Seguridad - COMPLETADA
+- [x] **Núcleo del Backend:** Aplicación FastAPI en `/api` con ORM SQLAlchemy.
+- [x] **API Segura:** Implementación de `GET /courses` con filtrado (nombre, modalidad, precio máximo).
+- [x] **Auditoría de Seguridad:** Validación estandarizada con Pydantic y manejo global de excepciones (sin trazas de error).
+- [x] **Pruebas Automatizadas:** Cobertura de pruebas del 100% para los endpoints de la API con Pytest (`tests/test_fase2.py`).
+- [x] **Inicio del Frontend:** Next.js 14 configurado en `/web` con Tailwind CSS y Shadcn/UI.
 
-## Fase 3: Frontend Search & Geolocation Logic - COMPLETED
-- [x] **Geolocalización:** Implementada lógica de cálculo de distancia Haversine (geodesic) basada en IP.
+## Fase 3: Búsqueda Frontend y Lógica de Geolocalización - COMPLETADA
+- [x] **Geolocalización:** Implementada lógica de cálculo de distancia Haversine (geodésica) basada en IP.
 - [x] **Privacidad:** Anonimización de IPs (máscara de último octeto) antes de geolocalización externa.
-- [x] **Frontend Search:** Buscador interactivo en Next.js 14 con tarjetas minimalistas de Shadcn/UI.
+- [x] **Búsqueda Frontend:** Buscador interactivo en Next.js 14 con tarjetas minimalistas de Shadcn/UI.
 - [x] **Ordenación:** Resultados ordenados automáticamente por cercanía al usuario.
 
 ### Flujo de Geolocalización
@@ -30,29 +30,29 @@ Amauta.ai es una plataforma diseñada para centralizar y comparar ofertas educat
 6. Los resultados se inyectan con el campo `distance_km` y se ordenan de menor a mayor distancia.
 7. Las coordenadas exactas de las instituciones se filtran mediante Pydantic para no exponer datos sensibles.
 
-## API Technical Documentation
+## Documentación Técnica de la API
 
-### Base URL
-`http://localhost:8000` (default for development)
+### URL Base
+`http://localhost:8000` (predeterminada para desarrollo)
 
 ### Endpoints
 
-#### 1. Search Courses
+#### 1. Buscar Cursos
 `GET /courses`
 
-Returns a list of courses with optional filters.
+Devuelve una lista de cursos con filtros opcionales.
 
-**Query Parameters:**
-| Parameter | Type | Description |
+**Parámetros de Consulta:**
+| Parámetro | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `name` | string | Partial, case-insensitive match for course name. |
-| `mode` | string | Filter by modality: `Presencial`, `Híbrido`, `Remoto`. |
-| `max_price` | decimal | Maximum price in PEN. |
+| `name` | string | Coincidencia parcial (insensible a mayúsculas) para el nombre del curso. |
+| `mode` | string | Filtrar por modalidad: `Presencial`, `Híbrido`, `Remoto`. |
+| `max_price` | decimal | Precio máximo en PEN. |
 
-**Example Request:**
+**Ejemplo de Solicitud:**
 `GET /courses?name=Ciencia&mode=Remoto&max_price=1000`
 
-**Example Response:**
+**Ejemplo de Respuesta:**
 ```json
 [
   {
@@ -73,21 +73,21 @@ Returns a list of courses with optional filters.
 ]
 ```
 
-### Security & Error Handling
-- **SQL Injection Prevention:** All queries use SQLAlchemy ORM with parameterized inputs.
-- **Data Validation:** Pydantic schemas enforce strict typing and constraints on all API inputs/outputs.
-- **Error Privacy:** A global exception handler catches all unhandled exceptions and returns a generic 500 message, preventing leakage of sensitive system information or stack traces.
+### Seguridad y Manejo de Errores
+- **Prevención de Inyección SQL:** Todas las consultas utilizan el ORM SQLAlchemy con entradas parametrizadas.
+- **Validación de Datos:** Los esquemas de Pydantic imponen tipado estricto y restricciones en todas las entradas/salidas de la API.
+- **Privacidad de Errores:** Un manejador de excepciones global captura todas las excepciones no controladas y devuelve un mensaje 500 genérico, evitando la filtración de información sensible del sistema o trazas de la pila (stack traces).
 
 ## Arquitectura de Base de Datos
 Estado actual: Operativa en Docker con PostgreSQL 16.
 - [x] **Instituciones:** UTEC y UPC inicializadas.
-- [x] **Cursos:** 8 registros activos con metadata de modalidad y geolocalización.
+- [x] **Cursos:** 8 registros activos con metadatos de modalidad y geolocalización.
 
 ### Esquema SQL (Fase 1.1)
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Table: institutions
+-- Tabla: institutions
 CREATE TABLE institutions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE institutions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table: courses
+-- Tabla: courses
 CREATE TABLE courses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     institution_id UUID NOT NULL REFERENCES institutions(id) ON DELETE CASCADE,
