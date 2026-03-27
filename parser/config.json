@@ -1,0 +1,21 @@
+{
+    "parser_name": "amauta-ai-course-parser",
+    "version": "1.0.0",
+    "output_schema": {
+        "name": "string",
+        "price_pen": "number",
+        "mode": ["Presencial", "Híbrido", "Remoto"],
+        "address": "string",
+        "duration": "string"
+    },
+    "currency_rules": {
+        "default": "PEN",
+        "exchange_rate_usd_pen": 3.75
+    },
+    "mode_mapping": {
+        "virtual": "Remoto",
+        "en línea": "Remoto",
+        "semipresencial": "Híbrido",
+        "face-to-face": "Presencial"
+    }
+}
