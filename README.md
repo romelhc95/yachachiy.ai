@@ -55,6 +55,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.2.7 | Infra | **Fix Cloudflare Binding**: Eliminación de binding circular 'WORKER_SELF_REFERENCE' y restauración de archivos `wrangler.jsonc`. |
 | 28/03/2026 | v1.2.6 | Infra | **Fix Despliegue**: Eliminación de trazas de Wrangler, corrección de `next.config.js` y securización de secretos en `render.yaml`. |
 | 28/03/2026 | v1.2.5 | Infra | **Simplificación Cloudflare**: Migración a preset nativo de Next.js. Eliminación de OpenNext por inestabilidad en build remoto. |
 | 28/03/2026 | v1.2.0 | Infra | **Cloud Deployment**: Configuración de Supabase (DB), Render (API) y Cloudflare Pages (Frontend). |
