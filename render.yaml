@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: yachachiy-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: yachachiy-db
+          property: connectionString
+      - key: PYTHONPATH
+        value: .

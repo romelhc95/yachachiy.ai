@@ -26,6 +26,30 @@ Yachachiy.ai es una plataforma diseñada para centralizar, comparar y optimizar 
     cd web; npm run dev
     ```
 
+## 🚀 Despliegue en la Nube
+
+El proyecto está preparado para ser desplegado de forma gratuita:
+
+### 1. Base de Datos (Supabase)
+- Se ha migrado la base de datos a **Supabase (PostgreSQL)**.
+- El script `scripts/migrate_db.py` puede usarse para inicializar el esquema en nuevos entornos.
+
+### 2. Backend (Render)
+- Conecta este repositorio a [Render](https://render.com).
+- Usa el archivo `render.yaml` o configura:
+  - **Build Command**: `pip install -r requirements.txt`
+  - **Start Command**: `uvicorn api.main:app --host 0.0.0.0 --port $PORT`
+  - **Env Vars**: `DATABASE_URL` (tu connection string de Supabase).
+
+### 3. Frontend (Cloudflare Pages)
+- Conecta este repositorio a [Cloudflare Pages](https://pages.cloudflare.com/).
+- Configuración:
+  - **Framework preset**: `Next.js`
+  - **Root directory**: `web`
+  - **Build command**: `npm run build`
+  - **Output directory**: `.next`
+  - **Env Vars**: `NEXT_PUBLIC_API_URL` (la URL de tu API en Render).
+
 ## 📜 Control de Versionamiento y Cambios
 Registro de hitos y modificaciones significativas en el proyecto:
 

@@ -9,6 +9,8 @@ import {
   ChevronLeft, MapPin, Clock, TrendingUp, DollarSign, 
   CheckCircle2, AlertCircle, Building, Star, ExternalLink
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
 
 interface Course {

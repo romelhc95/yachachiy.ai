@@ -5,7 +5,9 @@ requests
 python-dotenv
 fastapi
 uvicorn
+gunicorn
 sqlalchemy
 pydantic
 httpx
 geopy
+psycopg2-binary
