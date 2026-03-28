@@ -9,8 +9,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Amauta.ai API",
-    description="API for managing courses and institutions",
+    title="Yachachiy.ai API",
+    description="API for managing educational courses and institutions for Yachachiy.ai",
     version="1.0.0"
 )
 

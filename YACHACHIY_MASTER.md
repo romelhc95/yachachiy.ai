@@ -1,4 +1,4 @@
-# AMAUTA_MASTER: Especificación y Estado de Amauta.ai
+# YACHACHIY_MASTER: Especificación y Estado de Yachachiy.ai
 
 ## Visión: "Google Flights de la Educación Tecnológica en Perú"
 ## Stack: Next.js 14, FastAPI, PostgreSQL 16 (Producción) / SQLite (Desarrollo Local), Redis, Playwright.

@@ -2,7 +2,7 @@ import psycopg2
 import os
 import re
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_amauta:password_amauta@localhost:5432/amauta_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_yachachiy:password_yachachiy@localhost:5432/yachachiy_db")
 
 # List of keywords that define a DATA course
 DATA_KEYWORDS = [
@@ -47,7 +47,7 @@ def ai_parse_and_validate():
         for course_id, name, mode, price in courses:
             # Validate if it's a DATA course
             if not is_data_course(name):
-                # If not a DATA course, we might want to flag or delete it for Amauta.ai
+                # If not a DATA course, we might want to flag or delete it for Yachachiy.ai
                 # For this pilot, we'll mark them or just ignore them. 
                 # Let's delete them to keep the "Google Flights of DATA" focus.
                 cur.execute("DELETE FROM courses WHERE id = %s", (course_id,))

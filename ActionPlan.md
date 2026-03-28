@@ -1,4 +1,4 @@
-# Plan de Acción: Fase 1 - Recolector para Amauta.ai
+# Plan de Acción: Fase 1 - Recolector para Yachachiy.ai
 
 ## Objetivo
 Construir la base de PostgreSQL e implementar la ingesta automatizada de datos para universidades peruanas (UTEC y UPC como pilotos).

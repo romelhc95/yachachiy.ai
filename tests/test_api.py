@@ -33,7 +33,7 @@ def client(mock_db):
 def test_read_root(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Welcome to Amauta.ai API"}
+    assert response.json() == {"message": "Welcome to Yachachiy.ai API"}
 
 @pytest.mark.asyncio
 async def test_get_courses_success(client, mock_db):

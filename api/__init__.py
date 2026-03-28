@@ -1,1 +1,1 @@
-# Amauta.ai API Package
+# Yachachiy.ai API Package

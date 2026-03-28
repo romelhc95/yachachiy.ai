@@ -1,4 +1,4 @@
--- Initial PostgreSQL Schema for Amauta.ai
+-- Initial PostgreSQL Schema for Yachachiy.ai
 -- Created for Fase 1: Harvester Pilot (UTEC/UPC)
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

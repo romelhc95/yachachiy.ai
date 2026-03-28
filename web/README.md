@@ -1,6 +1,6 @@
-# Amauta.ai Frontend
+# Yachachiy.ai Frontend
 
-Este es el frontend de [Amauta.ai](https://amauta.ai), construido con [Next.js](https://nextjs.org).
+Este es el frontend de [Yachachiy.ai](https://yachachiy.ai), construido con [Next.js](https://nextjs.org).
 
 ## Inicio Rápido
 

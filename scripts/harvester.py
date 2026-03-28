@@ -5,7 +5,7 @@ import psycopg2
 from datetime import datetime
 
 # Load configuration from environment variables
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_amauta:password_amauta@localhost:5432/amauta_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_yachachiy:password_yachachiy@localhost:5432/yachachiy_db")
 
 async def scrape_utec(page):
     """Pilot scraper for UTEC"""

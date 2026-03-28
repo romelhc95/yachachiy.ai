@@ -11,7 +11,7 @@ if os.getenv("DATABASE_URL") and "@db:" in os.getenv("DATABASE_URL"):
 load_dotenv(override=True)
 
 # Priorizamos la variable de entorno del .env, con fallback a SQLite local para exploración segura
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./amauta.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./yachachiy.db")
 
 # Configuración específica para SQLite
 if DATABASE_URL.startswith("sqlite"):

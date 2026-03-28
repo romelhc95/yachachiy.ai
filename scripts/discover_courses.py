@@ -2,7 +2,7 @@ import psycopg2
 import os
 from datetime import datetime
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_amauta:password_amauta@localhost:5432/amauta_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_yachachiy:password_yachachiy@localhost:5432/yachachiy_db")
 
 COURSES = [
     {
