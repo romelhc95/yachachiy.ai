@@ -43,7 +43,8 @@ export default function CourseDetail() {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/courses/${slug}`);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/courses/${slug}`);
         if (!response.ok) throw new Error("Course not found");
         const data = await response.json();
         setCourse(data);
@@ -62,7 +63,8 @@ export default function CourseDetail() {
     if (!course) return;
 
     try {
-      const response = await fetch("http://localhost:8000/leads", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

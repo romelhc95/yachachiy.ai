@@ -32,9 +32,10 @@ export default function Home() {
   const fetchCourses = async (search = "") => {
     setLoading(true);
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const url = search 
-        ? `http://localhost:8000/courses?name=${encodeURIComponent(search)}`
-        : "http://localhost:8000/courses";
+        ? `${apiUrl}/courses?name=${encodeURIComponent(search)}`
+        : `${apiUrl}/courses`;
       const response = await fetch(url);
       const data = await response.json();
       setCourses(data);

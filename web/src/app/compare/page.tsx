@@ -41,9 +41,8 @@ function CompareContent() {
 
     const fetchCourses = async () => {
       try {
-        // In a real app, we'd have an endpoint for multiple IDs.
-        // For now, we fetch all and filter, or fetch one by one.
-        const response = await fetch("http://localhost:8000/courses");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/courses`);
         const allCourses: Course[] = await response.json();
         const selected = allCourses.filter(c => ids.includes(c.id));
         setCourses(selected);
