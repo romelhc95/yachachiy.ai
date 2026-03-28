@@ -12,6 +12,7 @@
 - @frontend-master: UI/UX con Shadcn/UI y Tailwind (replace).
 - @security-auditor: Filtro de seguridad (Bloqueo obligatorio).
 - @tdd-lead: Guardián de calidad (Bloqueo obligatorio).
+- @deploy-master: Experto en despliegue y resolución de errores en Cloudflare, Render y Supabase.
 
 ## Plan de Fases:
 - Fase 1: Harvester Pilot (Completada).
