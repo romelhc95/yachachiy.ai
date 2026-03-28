@@ -48,7 +48,7 @@ El proyecto está preparado para ser desplegado de forma gratuita:
   - **Root directory**: `web`
   - **Build command**: `npm run build`
   - **Output directory**: `.next`
-  - **Env Vars**: `NEXT_PUBLIC_API_URL` (la URL de tu API en Render).
+  - **Env Vars**: `NEXT_PUBLIC_API_URL` -> `https://yachachiy-api.onrender.com`
 
 ## 📜 Control de Versionamiento y Cambios
 Registro de hitos y modificaciones significativas en el proyecto:
