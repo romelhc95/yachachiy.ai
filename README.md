@@ -55,6 +55,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.2.0 | Infra | **Cloud Deployment**: Configuración de Supabase (DB), Render (API) y Cloudflare Pages (Frontend). Ajustes estrictos para adaptador OpenNext. |
 | 28/03/2026 | v1.1.0 | Migración | **Rebranding total**: Migración de `amauta.ai` a `yachachiy.ai`. Actualización de APIs, base de datos (SQLite), rutas y componentes UI. |
 | 28/03/2026 | v1.0.5 | Bug Fix | Solución de `ReferenceError: ExternalLink` y corrección de `asChild prop` en componentes de Shadcn/Base-UI. |
 | 28/03/2026 | v1.0.4 | Infra | Migración de PostgreSQL a **SQLite** para facilitar la portabilidad y exploración local. |
