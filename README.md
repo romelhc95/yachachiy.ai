@@ -55,11 +55,26 @@ El proyecto está preparado para ser desplegado de forma gratuita:
   - **Mensaje "No URLs enabled":** Ve a **Settings > Domains** en tu proyecto de Cloudflare Pages. Verifica que el subdominio `.pages.dev` esté habilitado. Si dice **Disabled**, actívalo para que la URL sea pública.
 - **Env Vars**: `NEXT_PUBLIC_API_URL` -> `https://yachachiy-api.onrender.com`
 
+### 4. Migración de Worker a Pages (IMPORTANTE)
+Si tu URL termina en `.workers.dev` y muestra "Hello world", has desplegado un **Worker** genérico en lugar de la aplicación **Pages**. Sigue estos pasos:
+
+1.  **Eliminar el Worker**: Ve a tu panel de Cloudflare > Workers & Pages > Selecciona el worker `yachachiy` > Settings > 'Delete'.
+2.  **Crear Proyecto de Pages**:
+    - Ve a `Workers & Pages` > `Create` > `Pages` > `Connect to Git`.
+    - Selecciona tu repositorio `yachachiy_ai`.
+3.  **Configuración de Build**:
+    - **Framework preset**: `Next.js`
+    - **Root directory**: `web`
+    - **Build command**: `npm run build`
+    - **Output directory**: `.next`
+4.  **Variables de Entorno**: No olvides añadir `NEXT_PUBLIC_API_URL` en la pestaña 'Settings' > 'Environment Variables' del proyecto de Pages.
+
 ## 📜 Control de Versionamiento y Cambios
 Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.3.4 | Infra | **Migración Worker a Pages**: Corrección de despliegue erróneo como Worker y guía de transición a Cloudflare Pages nativo. |
 | 28/03/2026 | v1.3.3 | Infra | **Troubleshooting Domain**: Guía para activar dominios .pages.dev y mejora de logs de URL en Cloudflare. |
 | 28/03/2026 | v1.3.2 | Infra | **Fix URL Visibility**: Mejora en el logging de despliegue de Cloudflare para visualizar la URL pública y solución al mensaje 'No URLs enabled'. |
 | 28/03/2026 | v1.3.1 | Infra | **Despliegue Exitoso**: Confirmación de build nativo en Cloudflare Pages. URL: [Pendiente - Verificar en panel] |
