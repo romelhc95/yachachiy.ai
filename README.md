@@ -46,7 +46,7 @@ El proyecto está preparado para ser desplegado de forma gratuita:
 - **Configuración Crítica (Panel de Cloudflare):**
   - **Framework preset**: `Next.js (App Router)`
   - **Build command**: `npm run build`
-  - **Output directory**: `.next`
+  - **Output directory**: `out`
   - **Root directory**: `web`
 - **Nota sobre la URL**: El script `postbuild` en `package.json` imprimirá automáticamente la URL de despliegue en los logs.
 - **Limpieza de Entorno:** Si el build falla por "recursive call", asegúrate de que el campo 'Build command' sea estrictamente `npm run build` y no incluya scripts de despliegue recursivo.
@@ -66,7 +66,7 @@ Si tu URL termina en `.workers.dev` y muestra "Hello world", has desplegado un *
     - **Framework preset**: `Next.js`
     - **Root directory**: `web`
     - **Build command**: `npm run build`
-    - **Output directory**: `.next`
+    - **Output directory**: `out`
 4.  **Variables de Entorno**: No olvides añadir `NEXT_PUBLIC_API_URL` en la pestaña 'Settings' > 'Environment Variables' del proyecto de Pages.
 
 ## 📜 Control de Versionamiento y Cambios
@@ -74,6 +74,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.3.5 | Infra | **Static Export**: Habilitación de `output: 'export'` en Next.js y cambio de `Output directory` a `out` para Cloudflare Pages. |
 | 28/03/2026 | v1.3.4 | Infra | **Migración Worker a Pages**: Corrección de despliegue erróneo como Worker y guía de transición a Cloudflare Pages nativo. |
 | 28/03/2026 | v1.3.3 | Infra | **Troubleshooting Domain**: Guía para activar dominios .pages.dev y mejora de logs de URL en Cloudflare. |
 | 28/03/2026 | v1.3.2 | Infra | **Fix URL Visibility**: Mejora en el logging de despliegue de Cloudflare para visualizar la URL pública y solución al mensaje 'No URLs enabled'. |
