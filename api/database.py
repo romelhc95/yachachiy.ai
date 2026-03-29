@@ -25,31 +25,42 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 
 def transform_supabase_url(url: str) -> str:
     """
-    Detecta si la URL es de Supabase y fuerza el uso de pooling (IPv4)
-    y parámetros de red específicos para evitar errores en Render.
+    Detecta si la URL es de Supabase y fuerza el uso de pooling (IPv4),
+    inyectando el ID del proyecto en el usuario para el Pooler.
     """
-    if not url or "supabase.co" not in url:
+    if not url or ("supabase.co" not in url and "pooler.supabase.com" not in url):
         return url
     
-    logger.info("--- INICIO TRANSFORMACIÓN SUPABASE (FORZADO IPv4) ---")
+    logger.info("--- INICIO REPARACIÓN IDENTIDAD SUPABASE POOLER ---")
     
-    # 1. Hostname de pooling (garantiza IPv4 en Render)
-    target_host = "db.fmcxwoqvxatbrawwtqke.supabase.co"
+    project_id = "fmcxwoqvxatbrawwtqke"
     pooling_host = "aws-0-us-east-1.pooler.supabase.com"
+    target_host = f"db.{project_id}.supabase.co"
     
+    # 1. Asegurar protocolo postgresql://
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    
+    # 2. Reemplazar host por el pooler si es necesario
     if target_host in url:
-        logger.info(f"Detectado hostname conflictivo: {target_host}. Reemplazando por: {pooling_host}")
+        logger.info(f"Detectado hostname original: {target_host}. Cambiando a pooler: {pooling_host}")
         url = url.replace(target_host, pooling_host)
     
-    # 2. Forzar puerto 6543 (Transaction mode / IPv4 pooler)
+    # 3. Forzar puerto 6543 para el Pooler (Transaction mode)
     if ":5432" in url:
         logger.info("Cambiando puerto 5432 a 6543.")
         url = url.replace(":5432", ":6543")
     elif ":6543" not in url:
         logger.info("Asegurando puerto 6543 en el host.")
         url = re.sub(r'(@[^/:]+)(/|$)', r'\1:6543\2', url)
-        
-    # 3. Parámetros de conexión críticos
+
+    # 4. Reparación de Identidad: Inyectar project_id en el usuario
+    # postgres -> postgres.fmcxwoqvxatbrawwtqke
+    if f"postgres.{project_id}" not in url:
+        logger.info(f"Inyectando ID de proyecto '{project_id}' en el usuario 'postgres'.")
+        url = url.replace("postgresql://postgres:", f"postgresql://postgres.{project_id}:")
+
+    # 5. Parámetros de conexión críticos
     params_to_add = ["sslmode=require", "gssencmode=disable"]
     for param in params_to_add:
         if param not in url:
@@ -58,8 +69,8 @@ def transform_supabase_url(url: str) -> str:
             logger.info(f"Añadido parámetro: {param}")
 
     safe_url = url.split("@")[-1] if "@" in url else url
-    logger.info(f"URL Procesada: {safe_url}")
-    logger.info("--- FIN TRANSFORMACIÓN SUPABASE ---")
+    logger.info(f"URL Procesada (Host/Port/Params): {safe_url}")
+    logger.info("--- FIN REPARACIÓN IDENTIDAD ---")
     return url
 
 # Reparación FORZADA de conexión Supabase (Puerto 6543 + IPv4)
