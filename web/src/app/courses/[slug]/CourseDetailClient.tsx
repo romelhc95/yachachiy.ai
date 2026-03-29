@@ -17,7 +17,7 @@ interface Course {
   name: string;
   slug: string;
   institution_name: string;
-  price_pen: number;
+  price_pen: number | null;
   mode: string;
   address: string;
   duration: string;
@@ -155,7 +155,7 @@ export default function CourseDetailClient({ params }: CourseDetailClientProps) 
                 <div className="space-y-1">
                   <div className="text-sm text-slate-500 uppercase font-bold tracking-wider">Costo Total</div>
                   <div className="text-2xl font-black text-slate-900 dark:text-white">
-                    S/ {course.price_pen.toLocaleString()}
+                    {course.price_pen === null ? "Consultar" : course.price_pen === 0 ? "Gratis" : `S/ ${course.price_pen.toLocaleString()}`}
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -274,14 +274,16 @@ export default function CourseDetailClient({ params }: CourseDetailClientProps) 
               </div>
               
               <div className="p-4 border-t border-slate-100 dark:border-zinc-800 text-center">
-                <a 
-                  href={course.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-xs text-indigo-600 font-bold hover:underline flex items-center justify-center gap-1"
-                >
-                  Ver en sitio oficial <ExternalLink className="h-3 w-3" />
-                </a>
+                {course.url && (
+                  <a 
+                    href={course.url.startsWith('http') ? course.url : `https://${course.url}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-xs text-indigo-600 font-bold hover:underline flex items-center justify-center gap-1"
+                  >
+                    Ver en sitio oficial <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
               </div>
             </Card>
           </div>

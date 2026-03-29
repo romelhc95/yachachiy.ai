@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import CourseDetailClient from "./CourseDetailClient";
 
 export async function generateStaticParams() {
@@ -16,5 +17,10 @@ interface PageProps {
 export default function CourseDetailPage({ params }: PageProps) {
   // En Next.js 15/16, pasamos la promesa directamente al Client Component
   // para una hidratación más robusta usando React.use()
-  return <CourseDetailClient params={params} />;
+  // Es obligatorio envolver en Suspense cuando el Client Component usa React.use(params)
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando detalles...</div>}>
+      <CourseDetailClient params={params} />
+    </Suspense>
+  );
 }

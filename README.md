@@ -30,6 +30,12 @@ Yachachiy.ai es una plataforma diseñada para centralizar, comparar y optimizar 
 
 El proyecto está preparado para ser desplegado de forma gratuita:
 
+### ⚡ Optimización de Rendimiento y HMR (Hot Module Replacement)
+Para evitar el **'Fast Refresh Loop'** y el uso excesivo de CPU detectado en entornos de desarrollo con Next.js 15/16:
+- **Uso de Suspense**: Es obligatorio envolver los componentes que consumen `params` asíncronos (vía `React.use()`) en un límite de `<Suspense>`. Esto previene ciclos de renderizado infinitos durante la hidratación.
+- **Limpieza de Caché**: Ante comportamientos erráticos del HMR, eliminar la carpeta `.next` (`rm -rf web/.next`) para forzar una reconstrucción limpia del grafo de dependencias.
+- **Aislamiento de Escritura**: No permitir que scripts externos (Python/Bash) escriban archivos dentro de la carpeta `web/` mientras el servidor de desarrollo está activo, ya que esto dispara reconstrucciones constantes.
+
 ### 1. Base de Datos (Supabase)
 - Se ha migrado la base de datos a **Supabase (PostgreSQL)**.
 - El script `scripts/migrate_db.py` puede usarse para inicializar el esquema en nuevos entornos.
@@ -73,6 +79,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.4.1 | Performance | **HMR & CPU Fix**: Resolución crítica del 'Fast Refresh Loop' mediante el uso de `<Suspense>` y aislamiento de procesos de escritura en el frontend. |
 | 28/03/2026 | v1.4.0 | Bug Fix | **Final Fix for Reload Loop**: Implementación definitiva de `React.use()` para la resolución de `params` en Next.js 16 y optimización de la estabilidad en el ciclo de vida de `useEffect`. |
 | 28/03/2026 | v1.3.9 | Bug Fix | **Fix Infinite Loop**: Solución del bucle de recarga en el detalle de cursos mediante la correcta gestión de `params` (Promise) en Next.js 15 y limpieza de `useEffect`. |
 | 28/03/2026 | v1.3.8 | Bug Fix | **Separación Client/Server**: Refactorización de `/courses/[slug]` para corregir la coexistencia entre `'use client'` y `generateStaticParams` en exportación estática. |

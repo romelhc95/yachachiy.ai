@@ -18,7 +18,7 @@ interface Course {
   name: string;
   slug: string;
   institution_name: string;
-  price_pen: number;
+  price_pen: number | null;
   mode: string;
   address: string;
   duration: string;
@@ -97,7 +97,9 @@ function CompareContent() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 dark:bg-zinc-900 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
                     <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Inversión</div>
-                    <div className="text-lg font-black text-slate-900 dark:text-white">S/ {course.price_pen.toLocaleString()}</div>
+                    <div className="text-lg font-black text-slate-900 dark:text-white">
+                      {course.price_pen === null ? "Consultar" : course.price_pen === 0 ? "Gratis" : `S/ ${course.price_pen.toLocaleString()}`}
+                    </div>
                   </div>
                   <div className="bg-slate-50 dark:bg-zinc-900 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
                     <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">ROI Est.</div>

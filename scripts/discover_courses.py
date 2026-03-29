@@ -1,113 +1,134 @@
-import psycopg2
-import os
+import asyncio
+from playwright.async_api import async_playwright
+from api.database import SessionLocal
+from api.models import Institution, Course
+from decimal import Decimal
 from datetime import datetime
+import re
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_yachachiy:password_yachachiy@localhost:5432/yachachiy_db")
+async def classify_category(name):
+    name_lower = name.lower()
+    if any(kw in name_lower for kw in ['maestria', 'maestría', 'master', 'magister']):
+        return 'Maestría'
+    if any(kw in name_lower for kw in ['doctorado', 'phd']):
+        return 'Doctorado'
+    if any(kw in name_lower for kw in ['especialidad', 'especialización', 'especializacion']):
+        return 'Especialidad'
+    if any(kw in name_lower for kw in ['diplomado']):
+        return 'Diplomado'
+    return 'Curso'
 
-COURSES = [
-    {
-        "name": "Ingeniería en Ciencia de Datos",
-        "institution_slug": "upn",
-        "price_pen": 0.0,  # To be filled later or estimated
-        "mode": "Híbrido",
-        "address": "Sede Breña/Los Olivos, Lima",
-        "url": "https://www.upn.edu.pe/carreras/ingenieria-en-ciencia-de-datos"
-    },
-    {
-        "name": "Ingeniería de Ciencia de Datos",
-        "institution_slug": "usmp",
-        "price_pen": 0.0,
-        "mode": "Presencial",
-        "address": "Facultad de Ingeniería y Arquitectura, La Molina",
-        "url": "https://usmp.edu.pe/ingenieria-de-ciencia-de-datos/"
-    },
-    {
-        "name": "Ingeniería de Ciencia de Datos e Inteligencia Artificial",
-        "institution_slug": "senati",
-        "price_pen": 0.0,
-        "mode": "Presencial",
-        "address": "Sede Independencia, Lima",
-        "url": "https://www.senati.edu.pe/especialidades/tecnologias-de-la-informacion/ingenieria-de-ciencia-de-datos-e-inteligencia-artificial"
-    },
-    {
-        "name": "Maestría en Data Science",
-        "institution_slug": "uni",
-        "price_pen": 0.0,
-        "mode": "Híbrido",
-        "address": "FIEECS, Rímac",
-        "url": "https://www.uni.edu.pe/posgrado/"
-    },
-    {
-        "name": "Maestría en Data Analytics & AI",
-        "institution_slug": "esan",
-        "price_pen": 0.0,
-        "mode": "Híbrido",
-        "address": "Santiago de Surco, Lima",
-        "url": "https://www.esan.edu.pe/maestrias/data-analytics-artificial-intelligence/"
-    },
-    {
-        "name": "Maestría en Ciencia de Datos para los Negocios",
-        "institution_slug": "ulima",
-        "price_pen": 0.0,
-        "mode": "Híbrido",
-        "address": "Santiago de Surco, Lima",
-        "url": "https://www.ulima.edu.pe/posgrado/maestrias/ciencia-de-datos-para-los-negocios"
-    },
-    {
-        "name": "Ingeniería en Inteligencia Artificial y Ciencia de Datos",
-        "institution_slug": "cientifica",
-        "price_pen": 0.0,
-        "mode": "Presencial",
-        "address": "Sede Villa, Chorrillos",
-        "url": "https://cientifica.edu.pe/carreras/ingenieria-en-inteligencia-artificial-y-ciencia-de-datos"
-    },
-    {
-        "name": "Programa especializado en Data Engineering",
-        "institution_slug": "dsrp",
-        "price_pen": 0.0,
-        "mode": "Remoto",
-        "address": "Online",
-        "url": "https://datascience.pe/especializacion-data-engineering/"
-    }
-]
-
-def integrate_courses():
+async def discover_programs(page, url, institution_slug):
+    print(f"Discovering programs at {url} for {institution_slug}...")
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
+        await page.goto(url, timeout=60000)
+        await asyncio.sleep(5) # Wait for JS
         
-        count = 0
-        for item in COURSES:
-            # Get institution_id
-            cur.execute("SELECT id FROM institutions WHERE slug = %s", (item['institution_slug'],))
-            result = cur.fetchone()
-            if not result:
-                print(f"Institution {item['institution_slug']} not found.")
-                continue
-            inst_id = result[0]
+        # Generic discovery logic: find all links that look like programs
+        # and titles that might be course names
+        items = []
+        
+        # Strategy 1: Look for links that contain headers or titles
+        links = await page.query_selector_all("a")
+        for link in links:
+            text = await link.inner_text()
+            text = text.strip().replace('\n', ' ')
+            href = await link.get_attribute("href")
             
-            # Simple slug generation from name
-            course_slug = item['name'].lower().replace(" ", "-").replace("/", "-")[:255]
-            
-            # Upsert course
-            cur.execute("""
-                INSERT INTO courses (institution_id, name, slug, price_pen, mode, address, url, last_scraped_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (institution_id, name, slug) DO UPDATE SET
-                    price_pen = EXCLUDED.price_pen,
-                    mode = EXCLUDED.mode,
-                    address = EXCLUDED.address,
-                    url = EXCLUDED.url,
-                    last_scraped_at = EXCLUDED.last_scraped_at
-            """, (inst_id, item['name'], course_slug, item['price_pen'], item['mode'], item['address'], item['url'], datetime.now()))
-            count += 1
-            
-        conn.commit()
-        print(f"Successfully integrated {count} new courses.")
-        cur.close()
-        conn.close()
+            if len(text) > 10 and len(text) < 150 and href and href.startswith('http'):
+                category = await classify_category(text)
+                # Only add if it's a likely program name (not 'contactanos', etc)
+                if any(kw in text.lower() for kw in ['maestria', 'maestría', 'doctorado', 'especialidad', 'curso', 'diplomado']):
+                    items.append({
+                        "name": text,
+                        "category": category,
+                        "institution_slug": institution_slug,
+                        "url": href, # Specific URL captured here
+                        "price": 0,
+                        "mode": "Remoto"
+                    })
+        
+        # Fallback: Strategy 2 (If no links found with keywords, try headers but this is less precise for URLs)
+        if not items:
+            headers = await page.query_selector_all("h2, h3")
+            for h in headers:
+                text = await h.inner_text()
+                text = text.strip().replace('\n', ' ')
+                if len(text) > 10 and len(text) < 100:
+                    category = await classify_category(text)
+                    items.append({
+                        "name": text,
+                        "category": category,
+                        "institution_slug": institution_slug,
+                        "url": url,
+                        "price": 0,
+                        "mode": "Remoto"
+                    })
+        
+        return items
     except Exception as e:
-        print(f"Error integrating courses: {e}")
+        print(f"Error at {url}: {e}")
+        return []
+
+def save_programs(programs):
+    count_new = 0
+    count_updated = 0
+    for p in programs:
+        db = SessionLocal()
+        try:
+            inst = db.query(Institution).filter(Institution.slug == p['institution_slug']).first()
+            if not inst: continue
+            
+            slug = re.sub(r'[^a-z0-9]+', '-', p['name'].lower()).strip('-')
+            
+            existing = db.query(Course).filter(Course.institution_id == inst.id, Course.name == p['name']).first()
+            if existing:
+                existing.category = p['category']
+                existing.url = p['url']
+                existing.last_scraped_at = datetime.now()
+                count_updated += 1
+            else:
+                course = Course(
+                    institution_id=inst.id,
+                    name=p['name'],
+                    slug=slug,
+                    category=p['category'],
+                    price_pen=Decimal("0"),
+                    mode=p['mode'],
+                    address=inst.address,
+                    url=p['url'],
+                    last_scraped_at=datetime.now()
+                )
+                db.add(course)
+                count_new += 1
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"Error saving {p['name']}: {e}")
+        finally:
+            db.close()
+    print(f"Finished: {count_new} new, {count_updated} updated.")
+
+async def main():
+    institutions_to_scan = [
+        ("pucp", "https://posgrado.pucp.edu.pe/programas/maestrias/"),
+        ("upn", "https://www.upn.edu.pe/posgrado/maestrias"),
+        ("usmp", "https://usmp.edu.pe/posgrado/"),
+        ("esan", "https://www.esan.edu.pe/maestrias/"),
+        ("uni", "http://www.posgrado.uni.edu.pe/")
+    ]
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        
+        all_programs = []
+        for slug, url in institutions_to_scan:
+            progs = await discover_programs(page, url, slug)
+            all_programs.extend(progs)
+        
+        save_programs(all_programs)
+        await browser.close()
 
 if __name__ == "__main__":
-    integrate_courses()
+    asyncio.run(main())

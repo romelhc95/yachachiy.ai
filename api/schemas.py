@@ -17,6 +17,7 @@ class CourseBase(BaseModel):
     mode: Optional[str] = None
     address: Optional[str] = None
     duration: Optional[str] = None
+    category: Optional[str] = "Curso"
     url: Optional[str] = None
     expected_monthly_salary: Optional[Decimal] = 0.00
 

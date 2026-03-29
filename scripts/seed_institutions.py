@@ -2,38 +2,42 @@ from api.database import SessionLocal
 from api.models import Institution
 
 INSTITUTIONS = [
-    ('Universidad Privada del Norte', 'upn', 'Lima, Trujillo, Cajamarca'),
-    ('Universidad de San Martín de Porres', 'usmp', 'Lima, Chiclayo, Arequipa'),
-    ('Universidad Peruana Unión', 'upeu', 'Lima, Tarapoto, Juliaca'),
-    ('Senati', 'senati', 'Nacional'),
-    ('Universidad del Pacífico', 'upacifico', 'Jesús María, Lima'),
-    ('Universidad Nacional de Ingeniería', 'uni', 'Rímac, Lima'),
-    ('Universidad de Lima', 'ulima', 'Santiago de Surco, Lima'),
-    ('Universidad Autónoma del Perú', 'autonoma', 'Villa EL Salvador, Lima'),
-    ('Universidad de Piura', 'udep', 'Piura, Lima'),
-    ('Pontificia Universidad Católica del Perú', 'pucp', 'San Miguel, Lima'),
-    ('Universidad Científica del Sur', 'cientifica', 'Villa, Lima'),
-    ('Instituto Continental', 'continental', 'Huancayo, Lima, Cusco'),
-    ('Universidad Nacional Mayor de San Marcos', 'unmsm', 'Cercado de Lima'),
-    ('ESAN', 'esan', 'Santiago de Surco, Lima'),
-    ('UNIR Perú', 'unir', 'Remoto'),
-    ('ISIL', 'isil', 'Lima'),
-    ('Data Science Research Peru', 'dsrp', 'Remoto/Lima'),
-    ('IDAT', 'idat', 'Lima')
+    ('Universidad Privada del Norte', 'upn', 'Lima, Trujillo, Cajamarca', 'https://www.upn.edu.pe'),
+    ('Universidad de San Martín de Porres', 'usmp', 'Lima, Chiclayo, Arequipa', 'https://usmp.edu.pe'),
+    ('Universidad Peruana Unión', 'upeu', 'Lima, Tarapoto, Juliaca', 'https://www.upeu.edu.pe'),
+    ('Senati', 'senati', 'Nacional', 'https://www.senati.edu.pe'),
+    ('Universidad del Pacífico', 'upacifico', 'Jesús María, Lima', 'https://www.up.edu.pe'),
+    ('Universidad Nacional de Ingeniería', 'uni', 'Rímac, Lima', 'https://www.uni.edu.pe'),
+    ('Universidad de Lima', 'ulima', 'Santiago de Surco, Lima', 'https://www.ulima.edu.pe'),
+    ('Universidad Autónoma del Perú', 'autonoma', 'Villa EL Salvador, Lima', 'https://www.autonoma.pe'),
+    ('Universidad de Piura', 'udep', 'Piura, Lima', 'https://udep.edu.pe'),
+    ('Pontificia Universidad Católica del Perú', 'pucp', 'San Miguel, Lima', 'https://www.pucp.edu.pe'),
+    ('Universidad Científica del Sur', 'cientifica', 'Villa, Lima', 'https://www.cientifica.edu.pe'),
+    ('Instituto Continental', 'continental', 'Huancayo, Lima, Cusco', 'https://icontinental.edu.pe'),
+    ('Universidad Nacional Mayor de San Marcos', 'unmsm', 'Cercado de Lima', 'https://unmsm.edu.pe'),
+    ('ESAN', 'esan', 'Santiago de Surco, Lima', 'https://www.esan.edu.pe'),
+    ('Universidad de Ingeniería y Tecnología', 'utec', 'Barranco, Lima', 'https://www.utec.edu.pe'),
+    ('UNIR Perú', 'unir', 'Remoto', 'https://peru.unir.net'),
+    ('ISIL', 'isil', 'Lima', 'https://isil.pe'),
+    ('Data Science Research Peru', 'dsrp', 'Remoto/Lima', 'https://datascience.pe'),
+    ('IDAT', 'idat', 'Lima', 'https://www.idat.edu.pe')
 ]
 
 def seed_institutions():
     db = SessionLocal()
     try:
-        for name, slug, address in INSTITUTIONS:
+        for name, slug, address, url in INSTITUTIONS:
             # Verificar si ya existe
             existing = db.query(Institution).filter(Institution.slug == slug).first()
             if not existing:
-                institution = Institution(name=name, slug=slug, address=address)
+                institution = Institution(name=name, slug=slug, address=address, website_url=url)
                 db.add(institution)
+            else:
+                existing.website_url = url
+                existing.address = address
         
         db.commit()
-        print(f"Éxito: Se han sembrado {len(INSTITUTIONS)} instituciones.")
+        print(f"Éxito: Se han sembrado/actualizado {len(INSTITUTIONS)} instituciones.")
     except Exception as e:
         db.rollback()
         print(f"Error sembrando instituciones: {e}")

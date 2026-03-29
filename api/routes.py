@@ -23,6 +23,7 @@ async def get_courses(
         models.Course.mode,
         models.Course.address,
         models.Course.duration,
+        models.Course.category,
         models.Course.url,
         models.Course.expected_monthly_salary,
         models.Course.last_scraped_at,
@@ -68,8 +69,8 @@ async def get_courses(
         # ROI Calculation (Months to recover investment)
         # Formula: total_price / expected_salary
         roi_months = None
-        price = course_dict.get("price_pen", 0)
-        salary = course_dict.get("expected_monthly_salary", 0)
+        price = course_dict.get("price_pen") or 0
+        salary = course_dict.get("expected_monthly_salary") or 0
         
         if salary and salary > 0:
             roi_months = float(price / salary)
@@ -99,6 +100,7 @@ async def get_course_detail(
         models.Course.mode,
         models.Course.address,
         models.Course.duration,
+        models.Course.category,
         models.Course.url,
         models.Course.expected_monthly_salary,
         models.Course.last_scraped_at,
@@ -128,8 +130,8 @@ async def get_course_detail(
 
     # ROI Calculation
     roi_months = None
-    price = course_dict.get("price_pen", 0)
-    salary = course_dict.get("expected_monthly_salary", 0)
+    price = course_dict.get("price_pen") or 0
+    salary = course_dict.get("expected_monthly_salary") or 0
     
     if salary and salary > 0:
         roi_months = float(price / salary)
