@@ -46,11 +46,13 @@ El proyecto está preparado para ser desplegado de forma gratuita:
 - **Configuración Crítica (Panel de Cloudflare):**
   - **Framework preset**: `Next.js (App Router)`
   - **Build command**: `npm run build`
-  - **Deploy command**: `echo "La URL de tu sitio es: $CF_PAGES_URL"` (Para forzar la visibilidad de la URL en logs)
   - **Output directory**: `.next`
   - **Root directory**: `web`
+- **Nota sobre la URL**: El script `postbuild` en `package.json` imprimirá automáticamente la URL de despliegue en los logs.
 - **Limpieza de Entorno:** Si el build falla por "recursive call", asegúrate de que el campo 'Build command' sea estrictamente `npm run build` y no incluya scripts de despliegue recursivo.
-- **Visibilidad de URL:** Si el dashboard muestra "'No URLs enabled'", revisa la salida del log de despliegue donde aparecerá el mensaje "La URL de tu sitio es: ..." gracias al comando arriba configurado.
+- **Troubleshooting de Visibilidad (URL):**
+  - **Variable $CF_PAGES_URL vacía:** Es común en el primer build o en ramas no productivas. Revisa los logs para ver el "Enlace sugerido" basado en el nombre del proyecto.
+  - **Mensaje "No URLs enabled":** Ve a **Settings > Domains** en tu proyecto de Cloudflare Pages. Verifica que el subdominio `.pages.dev` esté habilitado. Si dice **Disabled**, actívalo para que la URL sea pública.
 - **Env Vars**: `NEXT_PUBLIC_API_URL` -> `https://yachachiy-api.onrender.com`
 
 ## 📜 Control de Versionamiento y Cambios
@@ -58,6 +60,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.3.3 | Infra | **Troubleshooting Domain**: Guía para activar dominios .pages.dev y mejora de logs de URL en Cloudflare. |
 | 28/03/2026 | v1.3.2 | Infra | **Fix URL Visibility**: Mejora en el logging de despliegue de Cloudflare para visualizar la URL pública y solución al mensaje 'No URLs enabled'. |
 | 28/03/2026 | v1.3.1 | Infra | **Despliegue Exitoso**: Confirmación de build nativo en Cloudflare Pages. URL: [Pendiente - Verificar en panel] |
 | 28/03/2026 | v1.3.0 | Infra | **Desacoplamiento Total**: Limpieza definitiva de bindings y desacoplamiento total de OpenNext/Wrangler para despliegue nativo. |
