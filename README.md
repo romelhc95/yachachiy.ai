@@ -57,6 +57,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.3.0 | Infra | **Desacoplamiento Total**: Limpieza definitiva de bindings y desacoplamiento total de OpenNext/Wrangler para despliegue nativo. |
 | 28/03/2026 | v1.2.9 | Infra | **Optimización de Build**: Desactivación de telemetría, eliminación de OpenNext y corrección de bucles infinitos en Cloudflare. |
 | 28/03/2026 | v1.2.8 | Infra | **Fix Cloudflare Entry-point**: Definición de punto de entrada OpenNext en `wrangler.jsonc` y actualización de script de build. |
 | 28/03/2026 | v1.2.7 | Infra | **Fix Cloudflare Binding**: Eliminación de binding circular 'WORKER_SELF_REFERENCE' y restauración de archivos `wrangler.jsonc`. |
