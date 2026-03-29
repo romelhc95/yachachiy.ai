@@ -73,6 +73,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.3.9 | Bug Fix | **Fix Infinite Loop**: Solución del bucle de recarga en el detalle de cursos mediante la correcta gestión de `params` (Promise) en Next.js 15 y limpieza de `useEffect`. |
 | 28/03/2026 | v1.3.8 | Bug Fix | **Separación Client/Server**: Refactorización de `/courses/[slug]` para corregir la coexistencia entre `'use client'` y `generateStaticParams` en exportación estática. |
 | 28/03/2026 | v1.3.7 | Infra | **Final Fixes**: Optimización de inicio no bloqueante para Render y validación de `generateStaticParams` para Cloudflare. |
 | 28/03/2026 | v1.3.6 | Infra | **Dynamic Route Fix**: Implementación de `generateStaticParams` en `/courses/[slug]` para permitir exportación estática en Cloudflare Pages. |

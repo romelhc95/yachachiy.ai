@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,8 +27,11 @@ interface Course {
   expected_monthly_salary?: number;
 }
 
-export default function CourseDetailClient() {
-  const { slug } = useParams();
+interface CourseDetailClientProps {
+  slug: string;
+}
+
+export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
   const router = useRouter();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,23 +44,34 @@ export default function CourseDetailClient() {
   });
 
   useEffect(() => {
+    let isMounted = true;
     const fetchCourse = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         const response = await fetch(`${apiUrl}/courses/${slug}`);
-        if (!response.ok) throw new Error("Course not found");
+        if (!response.ok) {
+          throw new Error("Course not found");
+        }
         const data = await response.json();
-        setCourse(data);
+        if (isMounted) {
+          setCourse(data);
+          setLoading(false);
+        }
       } catch (error) {
-        console.error("Error:", error);
-        router.push("/");
-      } finally {
-        setLoading(false);
+        console.error("Error fetching course:", error);
+        if (isMounted) {
+          router.push("/");
+        }
       }
     };
+
     if (slug) {
       fetchCourse();
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [slug, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

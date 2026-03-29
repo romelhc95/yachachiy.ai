@@ -9,6 +9,11 @@ export async function generateStaticParams() {
   ];
 }
 
-export default function CourseDetailPage() {
-  return <CourseDetailClient />;
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function CourseDetailPage({ params }: PageProps) {
+  const resolvedParams = await params;
+  return <CourseDetailClient slug={resolvedParams.slug} />;
 }
