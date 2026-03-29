@@ -32,6 +32,14 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "An internal server error occurred. Please try again later."}
     )
 
+@app.on_event("startup")
+async def startup_event():
+    """
+    Optimización de inicio para evitar bloqueos en el despliegue (Render).
+    La conexión a la base de datos es perezosa (lazy).
+    """
+    logger.info("Yachachiy.ai API startup initiated. Database connection is lazy.")
+
 app.include_router(router)
 
 @app.get("/")

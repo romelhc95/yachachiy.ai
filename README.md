@@ -73,6 +73,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.3.7 | Infra | **Final Fixes**: Optimización de inicio no bloqueante para Render y validación de `generateStaticParams` para Cloudflare. |
 | 28/03/2026 | v1.3.6 | Infra | **Dynamic Route Fix**: Implementación de `generateStaticParams` en `/courses/[slug]` para permitir exportación estática en Cloudflare Pages. |
 | 28/03/2026 | v1.3.5 | Infra | **Static Export**: Habilitación de `output: 'export'` en Next.js y cambio de `Output directory` a `out` para Cloudflare Pages. |
 | 28/03/2026 | v1.3.4 | Infra | **Migración Worker a Pages**: Corrección de despliegue erróneo como Worker y guía de transición a Cloudflare Pages nativo. |
