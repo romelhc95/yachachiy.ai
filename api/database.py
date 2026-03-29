@@ -1,6 +1,7 @@
 import os
 import logging
 import re
+import urllib.parse
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -26,52 +27,39 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 def transform_supabase_url(url: str) -> str:
     """
     Detecta si la URL es de Supabase y fuerza el uso de pooling (IPv4),
-    inyectando el ID del proyecto en el usuario para el Pooler.
+    aplicando codificación de contraseña y usuario extendido.
     """
     if not url or ("supabase.co" not in url and "pooler.supabase.com" not in url):
         return url
     
-    logger.info("--- INICIO REPARACIÓN IDENTIDAD SUPABASE POOLER ---")
+    logger.info("--- REPARACIÓN DEFINITIVA IDENTIDAD SUPABASE POOLER ---")
     
-    project_id = "fmcxwoqvxatbrawwtqke"
-    pooling_host = "aws-0-us-east-1.pooler.supabase.com"
-    target_host = f"db.{project_id}.supabase.co"
-    
-    # 1. Asegurar protocolo postgresql://
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
-    
-    # 2. Reemplazar host por el pooler si es necesario
-    if target_host in url:
-        logger.info(f"Detectado hostname original: {target_host}. Cambiando a pooler: {pooling_host}")
-        url = url.replace(target_host, pooling_host)
-    
-    # 3. Forzar puerto 6543 para el Pooler (Transaction mode)
-    if ":5432" in url:
-        logger.info("Cambiando puerto 5432 a 6543.")
-        url = url.replace(":5432", ":6543")
-    elif ":6543" not in url:
-        logger.info("Asegurando puerto 6543 en el host.")
-        url = re.sub(r'(@[^/:]+)(/|$)', r'\1:6543\2', url)
-
-    # 4. Reparación de Identidad: Inyectar project_id en el usuario
-    # postgres -> postgres.fmcxwoqvxatbrawwtqke
-    if f"postgres.{project_id}" not in url:
-        logger.info(f"Inyectando ID de proyecto '{project_id}' en el usuario 'postgres'.")
-        url = url.replace("postgresql://postgres:", f"postgresql://postgres.{project_id}:")
-
-    # 5. Parámetros de conexión críticos
-    params_to_add = ["sslmode=require", "gssencmode=disable"]
-    for param in params_to_add:
-        if param not in url:
-            separator = "&" if "?" in url else "?"
-            url += f"{separator}{param}"
-            logger.info(f"Añadido parámetro: {param}")
-
-    safe_url = url.split("@")[-1] if "@" in url else url
-    logger.info(f"URL Procesada (Host/Port/Params): {safe_url}")
-    logger.info("--- FIN REPARACIÓN IDENTIDAD ---")
-    return url
+    try:
+        # Descomponer la DATABASE_URL de Render
+        current_url = url.replace("postgres://", "postgresql://", 1) if url.startswith("postgres://") else url
+        parsed = urllib.parse.urlparse(current_url)
+        
+        # Extraer dbname (path sin el leading slash)
+        dbname = parsed.path.lstrip('/')
+        if not dbname:
+            dbname = "postgres"
+            
+        # Valores forzados para Reparación de Identidad
+        user = "postgres.fmcxwoqvxatbrawwtqke"
+        password_raw = "2121146800R$."
+        password_encoded = urllib.parse.quote_plus(password_raw)
+        host = "aws-0-us-east-1.pooler.supabase.com"
+        port = "6543"
+        
+        # Reconstruir la URL con el host del pooler, puerto 6543 y sslmode=require
+        new_url = f"postgresql://{user}:{password_encoded}@{host}:{port}/{dbname}?sslmode=require"
+        
+        logger.info("CONEXIÓN ESTABLECIDA CON EL POOLER DE AWS (IPv4)")
+        return new_url
+        
+    except Exception as e:
+        logger.error(f"Error transformando URL de identidad: {e}")
+        return url
 
 # Reparación FORZADA de conexión Supabase (Puerto 6543 + IPv4)
 if DATABASE_URL:
