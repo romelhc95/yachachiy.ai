@@ -46,10 +46,11 @@ El proyecto está preparado para ser desplegado de forma gratuita:
 - **Configuración Crítica (Panel de Cloudflare):**
   - **Framework preset**: `Next.js (App Router)`
   - **Build command**: `npm run build`
-  - **Deploy command**: **DEJAR VACÍO** (Esto es vital para evitar bucles infinitos)
+  - **Deploy command**: `echo "La URL de tu sitio es: $CF_PAGES_URL"` (Para forzar la visibilidad de la URL en logs)
   - **Output directory**: `.next`
   - **Root directory**: `web`
-- **Limpieza de Entorno:** Si el build falla por "recursive call", asegúrate de que el campo 'Deploy command' en la configuración de Cloudflare esté totalmente vacío.
+- **Limpieza de Entorno:** Si el build falla por "recursive call", asegúrate de que el campo 'Build command' sea estrictamente `npm run build` y no incluya scripts de despliegue recursivo.
+- **Visibilidad de URL:** Si el dashboard muestra "'No URLs enabled'", revisa la salida del log de despliegue donde aparecerá el mensaje "La URL de tu sitio es: ..." gracias al comando arriba configurado.
 - **Env Vars**: `NEXT_PUBLIC_API_URL` -> `https://yachachiy-api.onrender.com`
 
 ## 📜 Control de Versionamiento y Cambios
@@ -57,6 +58,8 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.3.2 | Infra | **Fix URL Visibility**: Mejora en el logging de despliegue de Cloudflare para visualizar la URL pública y solución al mensaje 'No URLs enabled'. |
+| 28/03/2026 | v1.3.1 | Infra | **Despliegue Exitoso**: Confirmación de build nativo en Cloudflare Pages. URL: [Pendiente - Verificar en panel] |
 | 28/03/2026 | v1.3.0 | Infra | **Desacoplamiento Total**: Limpieza definitiva de bindings y desacoplamiento total de OpenNext/Wrangler para despliegue nativo. |
 | 28/03/2026 | v1.2.9 | Infra | **Optimización de Build**: Desactivación de telemetría, eliminación de OpenNext y corrección de bucles infinitos en Cloudflare. |
 | 28/03/2026 | v1.2.8 | Infra | **Fix Cloudflare Entry-point**: Definición de punto de entrada OpenNext en `wrangler.jsonc` y actualización de script de build. |

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "NEXT_TELEMETRY_DISABLED=1 next build",
+    "postbuild": "echo \"La URL de tu sitio es: $CF_PAGES_URL\"",
     "start": "next start",
     "lint": "eslint"
   },
