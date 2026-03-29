@@ -13,7 +13,8 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export default async function CourseDetailPage({ params }: PageProps) {
-  const resolvedParams = await params;
-  return <CourseDetailClient slug={resolvedParams.slug} />;
+export default function CourseDetailPage({ params }: PageProps) {
+  // En Next.js 15/16, pasamos la promesa directamente al Client Component
+  // para una hidratación más robusta usando React.use()
+  return <CourseDetailClient params={params} />;
 }

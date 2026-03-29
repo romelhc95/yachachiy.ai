@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,10 +28,11 @@ interface Course {
 }
 
 interface CourseDetailClientProps {
-  slug: string;
+  params: Promise<{ slug: string }>;
 }
 
-export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
+export default function CourseDetailClient({ params }: CourseDetailClientProps) {
+  const { slug } = use(params);
   const router = useRouter();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,13 +46,23 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
 
   useEffect(() => {
     let isMounted = true;
+    
     const fetchCourse = async () => {
+      // Evitamos re-fetchear si ya tenemos la data correcta para este slug
+      if (course && course.slug === slug) {
+        setLoading(false);
+        return;
+      }
+
       try {
+        setLoading(true);
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         const response = await fetch(`${apiUrl}/courses/${slug}`);
+        
         if (!response.ok) {
           throw new Error("Course not found");
         }
+        
         const data = await response.json();
         if (isMounted) {
           setCourse(data);
@@ -60,6 +71,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
       } catch (error) {
         console.error("Error fetching course:", error);
         if (isMounted) {
+          // Si hay error (ej. curso no existe), redirigir al inicio
           router.push("/");
         }
       }
@@ -72,7 +84,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
     return () => {
       isMounted = false;
     };
-  }, [slug, router]);
+  }, [slug, router]); // Mantener slug y router como dependencias estables
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
