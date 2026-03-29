@@ -6,43 +6,41 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
-# Configuración de logging profesional
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv(override=True)
 
-# --- CREDENCIALES DE PRODUCCIÓN DEFINITIVA (SUPABASE IPv4) ---
-# Usamos el Pooler Host específico para garantizar IPv4 y resolver error de Tenant
-DB_HOST = "fmcxwoqvxatbrawwtqke.pooler.supabase.com"
-DB_USER = "postgres.fmcxwoqvxatbrawwtqke"
-DB_PASS = urllib.parse.quote("2121146800R$.")
-DB_PORT = "6543"
+# --- ÚLTIMO RECURSO: CONEXIÓN DIRECTA SUPABASE ---
+# Datos proporcionados por el usuario para fmcxwoqvxatbrawwtqke
+DB_USER = "postgres"
+DB_PASS = urllib.parse.quote_plus("2121146800R$.")
+DB_HOST = "db.fmcxwoqvxatbrawwtqke.supabase.co"
+DB_PORT = "5432"
 DB_NAME = "postgres"
 
-# Construcción de la URL de conexión robusta
+# Construcción de la URL de conexión Directa (Sin Pooler para evitar DNS issues)
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
 
-logger.info("MODO PRODUCCIÓN: CONECTADO AL HOST DE PROYECTO SUPABASE")
+logger.info("--- INTENTO DE CONEXIÓN DIRECTA (TRADICIONAL) ---")
+logger.info(f"Host: {DB_HOST}")
 
 try:
-    # Motor de base de datos SIN SQLITE - Solo conexión real a la nube
+    # Motor con timeout largo para red inestable de Render
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
-        pool_recycle=300,
         connect_args={
             "sslmode": "require",
-            "connect_timeout": 30,
-            "application_name": "yachachiy_api"
+            "connect_timeout": 30
         }
     )
-    # Verificación de conexión inmediata
+    # Verificación
     with engine.connect() as conn:
-        logger.info("¡CONEXIÓN EXITOSA CON SUPABASE!")
+        logger.info("¡CONEXIÓN DIRECTA EXITOSA!")
 except Exception as e:
-    logger.error(f"ERROR CRÍTICO DE CONEXIÓN: {str(e)}")
-    # Fallback preventivo pero sin SQLite
+    logger.error(f"FALLO CONEXIÓN DIRECTA: {str(e)}")
+    # Creamos un motor dummy para que el build no falle
     engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
