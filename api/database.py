@@ -14,9 +14,9 @@ load_dotenv(override=True)
 
 # Parámetros Base de Supabase (fmcxwoqvxatbrawwtqke)
 PROJECT_ID = "fmcxwoqvxatbrawwtqke"
-DB_USER = f"postgres.{PROJECT_ID}"
+DB_USER = "postgres.fmcxwoqvxatbrawwtqke"
 DB_PASS = "2121146800R$."
-DB_HOST = "aws-0-us-east-1.pooler.supabase.com"  # Host del Pooler IPv4
+DB_HOST = "db.fmcxwoqvxatbrawwtqke.supabase.co"  # Host del Pooler IPv4
 DB_PORT = "6543"
 DB_NAME = "postgres"
 
@@ -24,6 +24,8 @@ def get_connection_url():
     """
     Construye la URL de conexión perfecta para el Pooler de Supabase en Render.
     """
+    logger.info("INTENTANDO CONEXIÓN NATIVA CON IDENTIDAD FORZADA...")
+    
     # Intentamos obtener la URL de Render para extraer la contraseña si fuera distinta
     env_url = os.getenv("DATABASE_URL", "")
     password = DB_PASS
@@ -54,24 +56,20 @@ def get_connection_url():
 
 DATABASE_URL = get_connection_url()
 
-try:
-    # Creamos el motor con parámetros de resiliencia
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,
-        pool_recycle=3600,
-        connect_args={
-            "sslmode": "require",
-            "connect_timeout": 10
-        }
-    )
-    # Prueba rápida de conexión
-    with engine.connect() as conn:
-        logger.info("¡CONEXIÓN EXITOSA CON SUPABASE!")
-except Exception as e:
-    logger.error(f"FALLO CRÍTICO DE CONEXIÓN: {str(e)}")
-    # Fallback a SQLite local si falla Supabase (para evitar que la API no levante)
-    engine = create_engine("sqlite:///./yachachiy.db", connect_args={"check_same_thread": False})
+# Creamos el motor con parámetros de resiliencia (SIN FALLBACK A SQLITE)
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    connect_args={
+        "sslmode": "require",
+        "connect_timeout": 15
+    }
+)
+
+# Prueba rápida de conexión obligatoria
+with engine.connect() as conn:
+    logger.info("¡CONEXIÓN EXITOSA CON SUPABASE!")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
