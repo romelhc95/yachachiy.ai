@@ -48,7 +48,6 @@ El proyecto está preparado para ser desplegado de forma gratuita:
   - **Build command**: `npm run build`
   - **Output directory**: `out`
   - **Root directory**: `web`
-- **Nota sobre la URL**: El script `postbuild` en `package.json` imprimirá automáticamente la URL de despliegue en los logs.
 - **Limpieza de Entorno:** Si el build falla por "recursive call", asegúrate de que el campo 'Build command' sea estrictamente `npm run build` y no incluya scripts de despliegue recursivo.
 - **Troubleshooting de Visibilidad (URL):**
   - **Variable $CF_PAGES_URL vacía:** Es común en el primer build o en ramas no productivas. Revisa los logs para ver el "Enlace sugerido" basado en el nombre del proyecto.
@@ -74,6 +73,7 @@ Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.3.6 | Infra | **Dynamic Route Fix**: Implementación de `generateStaticParams` en `/courses/[slug]` para permitir exportación estática en Cloudflare Pages. |
 | 28/03/2026 | v1.3.5 | Infra | **Static Export**: Habilitación de `output: 'export'` en Next.js y cambio de `Output directory` a `out` para Cloudflare Pages. |
 | 28/03/2026 | v1.3.4 | Infra | **Migración Worker a Pages**: Corrección de despliegue erróneo como Worker y guía de transición a Cloudflare Pages nativo. |
 | 28/03/2026 | v1.3.3 | Infra | **Troubleshooting Domain**: Guía para activar dominios .pages.dev y mejora de logs de URL en Cloudflare. |

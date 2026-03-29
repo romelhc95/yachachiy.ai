@@ -12,6 +12,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+export async function generateStaticParams() {
+  return [
+    { slug: "data-science-piloto" },
+    { slug: "ingenieria-software" },
+  ];
+}
+
 interface Course {
   id: string;
   name: string;

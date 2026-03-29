@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "NEXT_TELEMETRY_DISABLED=1 next build",
-    "postbuild": "echo \"Deployment Info - URL: $CF_PAGES_URL | Project: $CF_PAGES_PROJECT_NAME | Branch: $CF_PAGES_BRANCH | Enlace sugerido: https://$CF_PAGES_PROJECT_NAME.pages.dev\"",
     "start": "next start",
     "lint": "eslint"
   },
