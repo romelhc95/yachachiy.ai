@@ -43,18 +43,21 @@ El proyecto está preparado para ser desplegado de forma gratuita:
 
 ### 3. Frontend (Cloudflare Pages)
 - Conecta este repositorio a [Cloudflare Pages](https://pages.cloudflare.com/).
-- Configuración:
-  - **Framework preset**: `Next.js`
-  - **Root directory**: `web`
+- **Configuración Crítica (Panel de Cloudflare):**
+  - **Framework preset**: `Next.js (App Router)`
   - **Build command**: `npm run build`
+  - **Deploy command**: **DEJAR VACÍO** (Esto es vital para evitar bucles infinitos)
   - **Output directory**: `.next`
-  - **Env Vars**: `NEXT_PUBLIC_API_URL` -> `https://yachachiy-api.onrender.com`
+  - **Root directory**: `web`
+- **Limpieza de Entorno:** Si el build falla por "recursive call", asegúrate de que el campo 'Deploy command' en la configuración de Cloudflare esté totalmente vacío.
+- **Env Vars**: `NEXT_PUBLIC_API_URL` -> `https://yachachiy-api.onrender.com`
 
 ## 📜 Control de Versionamiento y Cambios
 Registro de hitos y modificaciones significativas en el proyecto:
 
 | Fecha | Versión | Tipo | Descripción de Cambios |
 | :--- | :--- | :--- | :--- |
+| 28/03/2026 | v1.2.9 | Infra | **Optimización de Build**: Desactivación de telemetría, eliminación de OpenNext y corrección de bucles infinitos en Cloudflare. |
 | 28/03/2026 | v1.2.8 | Infra | **Fix Cloudflare Entry-point**: Definición de punto de entrada OpenNext en `wrangler.jsonc` y actualización de script de build. |
 | 28/03/2026 | v1.2.7 | Infra | **Fix Cloudflare Binding**: Eliminación de binding circular 'WORKER_SELF_REFERENCE' y restauración de archivos `wrangler.jsonc`. |
 | 28/03/2026 | v1.2.6 | Infra | **Fix Despliegue**: Eliminación de trazas de Wrangler, corrección de `next.config.js` y securización de secretos en `render.yaml`. |
