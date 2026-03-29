@@ -14,10 +14,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration
+# CORS Configuration - Updated for robustness with credentials
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://yachachiy-ai.pages.dev",
+        "https://yachachiy-ai.pages.dev/"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,9 +39,22 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def startup_event():
     """
     Optimización de inicio para evitar bloqueos en el despliegue (Render).
-    La conexión a la base de datos es perezosa (lazy).
+    La conexión a la base de datos es perezosa (lazy) pero verificamos el conteo inicial para diagnóstico.
     """
+    from .database import SessionLocal
+    from .models import Institution, Course
+    
     logger.info("Yachachiy.ai API startup initiated. Database connection is lazy.")
+    
+    db = SessionLocal()
+    try:
+        inst_count = db.query(Institution).count()
+        course_count = db.query(Course).count()
+        logger.info(f"DATOS CARGADOS: {inst_count} instituciones y {course_count} cursos encontrados en la base de datos.")
+    except Exception as e:
+        logger.error(f"Error al verificar la base de datos al inicio: {e}")
+    finally:
+        db.close()
 
 app.include_router(router)
 

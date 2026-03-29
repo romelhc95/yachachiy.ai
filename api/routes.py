@@ -14,76 +14,84 @@ async def get_courses(
     max_price: Optional[Decimal] = Query(None, description="Maximum price in PEN"),
     db: Session = Depends(database.get_db)
 ):
-    query = db.query(
-        models.Course.id,
-        models.Course.institution_id,
-        models.Course.name,
-        models.Course.slug,
-        models.Course.price_pen,
-        models.Course.mode,
-        models.Course.address,
-        models.Course.duration,
-        models.Course.category,
-        models.Course.url,
-        models.Course.expected_monthly_salary,
-        models.Course.last_scraped_at,
-        models.Course.created_at,
-        models.Course.updated_at,
-        models.Institution.name.label("institution_name"),
-        models.Institution.location_lat,
-        models.Institution.location_long
-    ).join(models.Institution, models.Course.institution_id == models.Institution.id)
+    try:
+        query = db.query(
+            models.Course.id,
+            models.Course.institution_id,
+            models.Course.name,
+            models.Course.slug,
+            models.Course.price_pen,
+            models.Course.mode,
+            models.Course.address,
+            models.Course.duration,
+            models.Course.category,
+            models.Course.url,
+            models.Course.expected_monthly_salary,
+            models.Course.last_scraped_at,
+            models.Course.created_at,
+            models.Course.updated_at,
+            models.Institution.name.label("institution_name"),
+            models.Institution.location_lat,
+            models.Institution.location_long
+        ).join(models.Institution, models.Course.institution_id == models.Institution.id)
 
-    if name:
-        query = query.filter(models.Course.name.ilike(f"%{name}%"))
-    
-    if mode:
-        query = query.filter(models.Course.mode == mode)
-    
-    if max_price is not None:
-        query = query.filter(models.Course.price_pen <= max_price)
-
-    results = query.all()
-
-    # IP Geolocation Logic
-    client_ip = request.client.host
-    client_coords = await utils.get_client_coordinates(client_ip)
-
-    processed_results = []
-    for row in results:
-        # Convert row to dict for manipulation
-        if hasattr(row, "_fields"):
-            course_dict = dict(zip(row._fields, row))
-        else:
-            # Handle cases where row might already be a dict (like in some tests)
-            course_dict = dict(row)
+        if name:
+            query = query.filter(models.Course.name.ilike(f"%{name}%"))
         
-        # Geolocation distance
-        distance = None
-        if client_coords and course_dict.get("location_lat") and course_dict.get("location_long"):
-            inst_coords = (float(course_dict["location_lat"]), float(course_dict["location_long"]))
-            distance = utils.calculate_distance(client_coords, inst_coords)
+        if mode:
+            query = query.filter(models.Course.mode == mode)
         
-        course_dict["distance_km"] = distance
+        if max_price is not None:
+            query = query.filter(models.Course.price_pen <= max_price)
 
-        # ROI Calculation (Months to recover investment)
-        # Formula: total_price / expected_salary
-        roi_months = None
-        price = course_dict.get("price_pen") or 0
-        salary = course_dict.get("expected_monthly_salary") or 0
-        
-        if salary and salary > 0:
-            roi_months = float(price / salary)
-        
-        course_dict["roi_months"] = roi_months
+        results = query.all()
 
-        processed_results.append(course_dict)
+        # IP Geolocation Logic
+        client_ip = request.client.host
+        client_coords = await utils.get_client_coordinates(client_ip)
 
-    # Sort by distance if available, otherwise just return results
-    if client_coords:
-        processed_results.sort(key=lambda x: x["distance_km"] if x["distance_km"] is not None else float('inf'))
+        processed_results = []
+        for row in results:
+            # Convert row to dict for manipulation
+            if hasattr(row, "_fields"):
+                course_dict = dict(zip(row._fields, row))
+            else:
+                # Handle cases where row might already be a dict (like in some tests)
+                course_dict = dict(row)
+            
+            # Geolocation distance
+            distance = None
+            if client_coords and course_dict.get("location_lat") and course_dict.get("location_long"):
+                inst_coords = (float(course_dict["location_lat"]), float(course_dict["location_long"]))
+                distance = utils.calculate_distance(client_coords, inst_coords)
+            
+            course_dict["distance_km"] = distance
 
-    return processed_results
+            # ROI Calculation (Months to recover investment)
+            # Formula: total_price / expected_salary
+            roi_months = None
+            price = course_dict.get("price_pen") or 0
+            salary = course_dict.get("expected_monthly_salary") or 0
+            
+            if salary and salary > 0:
+                roi_months = float(price / salary)
+            
+            course_dict["roi_months"] = roi_months
+
+            processed_results.append(course_dict)
+
+        # Sort by distance if available, otherwise just return results
+        if client_coords:
+            processed_results.sort(key=lambda x: x["distance_km"] if x["distance_km"] is not None else float('inf'))
+
+        return processed_results
+    except Exception as e:
+        import logging
+        logging.error(f"DATABASE CONNECTION ERROR in get_courses: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al conectar con la base de datos: {str(e)}"
+        )
 
 @router.get("/courses/{slug}", response_model=schemas.CourseResponse)
 async def get_course_detail(
