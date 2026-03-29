@@ -48,51 +48,21 @@ def seed_institutions():
     db = SessionLocal()
     try:
         print(f"Engine URL: {engine.url}")
-        print(f"Seeding {len(institutions_data)} institutions...")
+        print(f"Seeding {len(institutions_data)} institutions (POSTGRES ONLY)...")
         
         for data in institutions_data:
             slug = slugify(data["name"])
             
-            # Use SQL text for UPSERT compatibility with SQLite/Postgres if needed
-            # For simplicity in this script, we'll use ORM or core insert
-            
-            if "sqlite" in str(engine.url):
-                # SQLite doesn't support ON CONFLICT in the same way with SQLAlchemy core as Postgres easily
-                # but we can check existence or use raw SQL
-                existing = db.query(Institution).filter(Institution.slug == slug).first()
-                if existing:
-                    existing.name = data["name"]
-                    existing.website_url = data["website_url"]
-                else:
-                    new_inst = Institution(
-                        name=data["name"],
-                        slug=slug,
-                        website_url=data["website_url"]
-                    )
-                    db.add(new_inst)
-            elif "mysql" in str(engine.url):
-                # MySQL UPSERT using SQLAlchemy core
-                from sqlalchemy.dialects.mysql import insert as mysql_insert
-                stmt = mysql_insert(Institution).values(
-                    name=data["name"],
-                    slug=slug,
-                    website_url=data["website_url"]
-                ).on_duplicate_key_update(
-                    name=data["name"],
-                    website_url=data["website_url"]
-                )
-                db.execute(stmt)
-            else:
-                # Postgres UPSERT
-                stmt = insert(Institution).values(
-                    name=data["name"],
-                    slug=slug,
-                    website_url=data["website_url"]
-                ).on_conflict_do_update(
-                    index_elements=['slug'],
-                    set_=dict(name=data["name"], website_url=data["website_url"])
-                )
-                db.execute(stmt)
+            # Postgres UPSERT
+            stmt = insert(Institution).values(
+                name=data["name"],
+                slug=slug,
+                website_url=data["website_url"]
+            ).on_conflict_do_update(
+                index_elements=['slug'],
+                set_=dict(name=data["name"], website_url=data["website_url"])
+            )
+            db.execute(stmt)
         
         db.commit()
         print("Institutions seeded successfully.")
