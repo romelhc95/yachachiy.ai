@@ -12,24 +12,21 @@ logger = logging.getLogger(__name__)
 
 load_dotenv(override=True)
 
-# --- CREDENCIALES DE PRODUCCIÓN (SUPABASE) ---
-PROJECT_ID = "fmcxwoqvxatbrawwtqke"
-DB_USER = f"postgres.{PROJECT_ID}"
-DB_PASS = urllib.parse.quote_plus("2121146800R$.")
-# Usamos el Pooler Host específico del proyecto para evitar el error 'Tenant not found'
-DB_HOST = f"{PROJECT_ID}.pooler.supabase.com" 
+# --- CREDENCIALES DE PRODUCCIÓN DEFINITIVA (SUPABASE IPv4) ---
+# Usamos el Pooler Host específico para garantizar IPv4 y resolver error de Tenant
+DB_HOST = "fmcxwoqvxatbrawwtqke.pooler.supabase.com"
+DB_USER = "postgres.fmcxwoqvxatbrawwtqke"
+DB_PASS = urllib.parse.quote("2121146800R$.")
 DB_PORT = "6543"
 DB_NAME = "postgres"
 
 # Construcción de la URL de conexión robusta
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require&gssencmode=disable"
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
 
-logger.info("--- INICIANDO MOTOR DE DATOS YACHACHIY V3 (POOLER ESPECÍFICO) ---")
-logger.info(f"Conectando a Host Dedicado: {DB_HOST}")
-logger.info(f"Identidad de Usuario: {DB_USER}")
+logger.info("MODO PRODUCCIÓN: CONECTADO AL HOST DE PROYECTO SUPABASE")
 
 try:
-    # Motor de base de datos sin fallbacks a SQLite para evitar confusión con datos viejos
+    # Motor de base de datos SIN SQLITE - Solo conexión real a la nube
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
@@ -40,13 +37,12 @@ try:
             "application_name": "yachachiy_api"
         }
     )
-    # Verificación inmediata
+    # Verificación de conexión inmediata
     with engine.connect() as conn:
-        logger.info("¡ALELUYA! CONEXIÓN ESTABLECIDA CON SUPABASE.")
+        logger.info("¡CONEXIÓN EXITOSA CON SUPABASE!")
 except Exception as e:
-    logger.error(f"FALLO DE RED/AUTENTICACIÓN: {str(e)}")
-    # Creamos un motor vacío para que el build de Render no explote, 
-    # pero la API dará error 500 hasta que conecte a la nube.
+    logger.error(f"ERROR CRÍTICO DE CONEXIÓN: {str(e)}")
+    # Fallback preventivo pero sin SQLite
     engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
