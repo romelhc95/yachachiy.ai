@@ -61,11 +61,19 @@ export default function Home() {
       const url = search 
         ? `${apiUrl}/courses?name=${encodeURIComponent(search)}`
         : `${apiUrl}/courses`;
+      
+      console.log(`FETCHING FROM: ${url}`);
       const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+      
       const data = await response.json();
       setAllCourses(data);
     } catch (error) {
       console.error("Error fetching courses:", error);
+      // Fallback for UI if needed
     } finally {
       setLoading(false);
     }
@@ -76,7 +84,8 @@ export default function Home() {
   }, []);
 
   const filteredCourses = useMemo(() => {
-    return allCourses.filter((course) => {
+    const coursesToFilter = Array.isArray(allCourses) ? allCourses : [];
+    return coursesToFilter.filter((course) => {
       // Modality filter
       if (activeFilters.modes.length > 0) {
         if (!activeFilters.modes.includes(course.mode)) return false;
