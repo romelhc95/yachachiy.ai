@@ -23,27 +23,48 @@ if DATABASE_URL:
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
+def transform_supabase_url(url: str) -> str:
+    """
+    Detecta si la URL es de Supabase y fuerza el uso de pooling (IPv4)
+    y parámetros de red específicos para evitar errores en Render.
+    """
+    if not url or "supabase.co" not in url:
+        return url
+    
+    logger.info("--- INICIO TRANSFORMACIÓN SUPABASE (FORZADO IPv4) ---")
+    
+    # 1. Hostname de pooling (garantiza IPv4 en Render)
+    target_host = "db.fmcxwoqvxatbrawwtqke.supabase.co"
+    pooling_host = "aws-0-us-east-1.pooler.supabase.com"
+    
+    if target_host in url:
+        logger.info(f"Detectado hostname conflictivo: {target_host}. Reemplazando por: {pooling_host}")
+        url = url.replace(target_host, pooling_host)
+    
+    # 2. Forzar puerto 6543 (Transaction mode / IPv4 pooler)
+    if ":5432" in url:
+        logger.info("Cambiando puerto 5432 a 6543.")
+        url = url.replace(":5432", ":6543")
+    elif ":6543" not in url:
+        logger.info("Asegurando puerto 6543 en el host.")
+        url = re.sub(r'(@[^/:]+)(/|$)', r'\1:6543\2', url)
+        
+    # 3. Parámetros de conexión críticos
+    params_to_add = ["sslmode=require", "gssencmode=disable"]
+    for param in params_to_add:
+        if param not in url:
+            separator = "&" if "?" in url else "?"
+            url += f"{separator}{param}"
+            logger.info(f"Añadido parámetro: {param}")
+
+    safe_url = url.split("@")[-1] if "@" in url else url
+    logger.info(f"URL Procesada: {safe_url}")
+    logger.info("--- FIN TRANSFORMACIÓN SUPABASE ---")
+    return url
+
 # Reparación FORZADA de conexión Supabase (Puerto 6543 + IPv4)
 if DATABASE_URL:
-    # Reemplazo directo solicitado
-    if 'db.fmcxwoqvxatbrawwtqke.supabase.co:5432' in DATABASE_URL:
-        DATABASE_URL = DATABASE_URL.replace('db.fmcxwoqvxatbrawwtqke.supabase.co:5432', 'db.fmcxwoqvxatbrawwtqke.supabase.co:6543')
-    
-    # Asegurar que el puerto 6543 esté presente si es Supabase
-    if "supabase.co" in DATABASE_URL and ":6543" not in DATABASE_URL:
-        DATABASE_URL = re.sub(r'(@[^/:]+)(/|$)', r'\1:6543\2', DATABASE_URL)
-        
-    # Añadir explícitamente '?sslmode=require' si no está presente
-    if "sslmode=require" not in DATABASE_URL:
-        if "?" in DATABASE_URL:
-            DATABASE_URL += "&sslmode=require"
-        else:
-            DATABASE_URL += "?sslmode=require"
-
-# Imprimir un log claro según lo solicitado
-safe_url = DATABASE_URL.split("@")[-1] if "@" in DATABASE_URL else DATABASE_URL
-print(f"DATABASE_URL FINAL: {safe_url}")
-logger.info(f"DATABASE_URL FINAL: {safe_url}")
+    DATABASE_URL = transform_supabase_url(DATABASE_URL)
 
 try:
     # Configuración específica para SQLite
