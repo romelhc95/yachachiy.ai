@@ -14,17 +14,35 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration - Updated for robustness with credentials
+# CORS Configuration - Updated for robustness
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://yachachiy-ai.pages.dev",
-        "https://yachachiy-ai.pages.dev/"
-    ],
-    allow_credentials=True,
+    allow_origins=["*"], # Allow all for debugging purposes
+    allow_credentials=False, # Must be False if using "*" for allow_origins
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Manual Middleware for CORS injection in ALL responses (including errors)
+@app.middleware("http")
+async def add_cors_header(request: Request, call_next):
+    try:
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+    except Exception as e:
+        logger.error(f"Error in manual CORS middleware: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+                "Access-Control-Allow-Headers": "*"
+            },
+            content={"error": "internal_server_error", "detail": str(e)}
+        )
 
 # Standard error handler to avoid exposing internal traces
 @app.exception_handler(Exception)

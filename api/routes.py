@@ -6,7 +6,7 @@ from . import models, schemas, database, utils
 
 router = APIRouter()
 
-@router.get("/courses", response_model=List[schemas.CourseResponse])
+@router.get("/courses", response_model=None) # Changed to None to allow flexible error responses
 async def get_courses(
     request: Request,
     name: Optional[str] = Query(None, description="Case-insensitive search by name"),
@@ -14,6 +14,11 @@ async def get_courses(
     max_price: Optional[Decimal] = Query(None, description="Maximum price in PEN"),
     db: Session = Depends(database.get_db)
 ):
+    import logging
+    from fastapi.responses import JSONResponse
+    logger = logging.getLogger(__name__)
+
+    logger.info("Intentando conectar a DB para obtener cursos...")
     try:
         query = db.query(
             models.Course.id,
@@ -45,6 +50,7 @@ async def get_courses(
             query = query.filter(models.Course.price_pen <= max_price)
 
         results = query.all()
+        logger.info(f"Datos recuperados: {len(results)} registros encontrados.")
 
         # IP Geolocation Logic
         client_ip = request.client.host
@@ -86,11 +92,11 @@ async def get_courses(
 
         return processed_results
     except Exception as e:
-        import logging
-        logging.error(f"DATABASE CONNECTION ERROR in get_courses: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Error al conectar con la base de datos: {str(e)}"
+        logger.error(f"DATABASE CONNECTION ERROR in get_courses: {e}", exc_info=True)
+        # Devolvemos 200 con el error incrustado para saltar el CORS block y ver el error real en el frontend
+        return JSONResponse(
+            status_code=200, 
+            content={"error": "db_connection_failed", "detail": str(e)}
         )
 
 @router.get("/courses/{slug}", response_model=schemas.CourseResponse)
