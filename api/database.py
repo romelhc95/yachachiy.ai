@@ -33,9 +33,17 @@ logger.info(f"--- INICIALIZANDO CONEXIÓN A DB ---")
 
 try:
     # Motor configurado para máxima compatibilidad con Supabase (PgBouncer)
-    connect_args = {"connect_timeout": 30}
-    if "postgresql" in DATABASE_URL:
+    connect_args = {}
+    if "postgresql+pg8000" in DATABASE_URL:
+        import ssl
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        connect_args["ssl_context"] = ssl_context
+        connect_args["timeout"] = 30
+    elif "postgresql" in DATABASE_URL:
         connect_args["sslmode"] = "require"
+        connect_args["connect_timeout"] = 30
         
     engine = create_engine(
         DATABASE_URL,
