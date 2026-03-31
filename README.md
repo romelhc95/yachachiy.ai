@@ -1,55 +1,35 @@
-# Yachachiy.ai - Democratizando la Educación en el Perú 🇵🇪
+# Yachachiy.ai - Plataforma Educativa Serverless de Alta Fidelidad 🇵🇪
 
-Yachachiy.ai es una plataforma impulsada por IA diseñada para centralizar, comparar y optimizar la búsqueda de educación superior en el Perú. Utiliza un stack moderno serverless para garantizar alta disponibilidad y seguridad en el manejo de datos académicos.
+**Yachachiy.ai** es la plataforma líder en el Perú para la toma de decisiones educativas basadas en datos reales. Nuestra misión es democratizar el acceso a la información académica (precios, ROI, mallas curriculares) para que cada profesional elija el programa que maximice su potencial.
 
-## 🏛️ Nueva Arquitectura (2025)
+## 🚀 Arquitectura Purificada (High Fidelity)
 
-El sistema ha evolucionado de una arquitectura monolítica a un modelo **Full Serverless** de alto rendimiento:
+El proyecto ha sido consolidado en una arquitectura **100% Serverless** y **Edge-Native**, eliminando cualquier dependencia de servidores tradicionales (EC2, Heroku, Docker) para garantizar latencia mínima y escalabilidad infinita.
 
-1.  **Frontend:** Next.js 15 (App Router) desplegado en **Cloudflare Pages**.
-2.  **Data Layer (Bypass de Backend):** El cliente se comunica directamente con la API REST de **Supabase** (PostgreSQL) mediante una capa de seguridad endurecida.
-3.  **Procesamiento de IA:** Scripts especializados (`ai_parser.py`, `harvester.py`) que procesan datos de instituciones peruanas y realizan el UPSERT hacia la base de datos centralizada.
+### Core Stack
+- **Frontend:** [Next.js 15](https://nextjs.org/) (App Router) desplegado en **Cloudflare Pages**.
+- **Data Engine:** [Supabase](https://supabase.com/) (PostgreSQL + PostgREST) para persistencia y APIs instantáneas.
+- **Edge Logic:** [Cloudflare Workers](https://workers.cloudflare.com/) (Localizado en `cloudflare_backend/`) para tareas críticas de procesamiento en el borde.
+- **Data Ingestion:** Sistema de scraping de alta fidelidad con **AI-Parsing** para normalización de datos institucionales.
 
-## 🛠️ Stack Tecnológico
+## 🏛️ Estructura del Repositorio
 
--   **Framework:** [Next.js](https://nextjs.org/) (React 18+)
--   **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
--   **Componentes UI:** [Shadcn/UI](https://ui.shadcn.com/)
--   **Iconografía:** [Lucide React](https://lucide.dev/)
--   **Base de Datos & Auth:** [Supabase](https://supabase.com/) (PostgreSQL)
--   **Automatización:** Python 3.11+ (Requests, BeautifulSoup, Playwright)
+```text
+yachachiy_ai/
+├── web/                # Aplicación Next.js 15 (Frontend + Client Logic)
+├── cloudflare_backend/ # Workers para lógica pesada o webhooks
+├── scripts/            # Engine de Recolección (Harvesters & AI Parsers)
+├── db/                 # Esquemas y migraciones de Supabase
+└── tests/              # Suite de validación de integridad de datos
+```
 
-## 🛡️ Estándares de Seguridad
+## 🛡️ Seguridad y Performance
+1. **Direct-to-Supabase:** La comunicación entre el cliente y la base de datos es directa via REST, protegida por **Row Level Security (RLS)**.
+2. **Data-Driven ROI:** Algoritmos que calculan el retorno de inversión comparando el costo del programa vs. salarios reales del mercado peruano.
+3. **SEO & Edge Rendering:** Rutas dinámicas optimizadas para ser servidas desde el CDN de Cloudflare, garantizando tiempos de carga <1s.
 
-Para garantizar la integridad y privacidad de los datos sin un backend intermedio, se han implementado:
-
--   **Row Level Security (RLS):** Las tablas en Supabase tienen políticas estrictas.
-    -   `courses`: Lectura pública (`SELECT`), inserción restringida.
-    -   `leads`: Inserción pública (`INSERT`), lectura prohibida para el rol anónimo (`SELECT` retorna vacío).
--   **Anon Key Hardening:** La clave `anon_key` está configurada para permitir solo las operaciones de negocio necesarias.
--   **Flujo Hermético:** El flujo `Cursos -> UI -> Leads` garantiza que la información de contacto de los usuarios sea unidireccional (sólo llega a la base de datos y no es accesible desde el cliente).
-
-## 🚀 Guía de Desarrollo
-
-### Requisitos Previos
-- Node.js 18+
-- Python 3.11+ (para scrapers y procesamiento)
-
-### Local vs Producción
-1.  **Entorno Local:**
-    -   Clonar el repositorio.
-    -   Instalar dependencias: `cd web && npm install`.
-    -   Configurar variables en `.env.local` (Supabase URL y Anon Key).
-    -   Ejecutar: `npm run dev`.
-2.  **Producción:**
-    -   Despliegue automático vía GitHub Actions a **Cloudflare Pages**.
-    -   La base de datos reside en **Supabase Cloud (Región us-east-1)**.
-
-## 📊 Estado del Mapa Institucional (Fase 2)
-
--   **Instituciones Mapeadas:** 36 (Principales universidades e institutos del Perú).
--   **Cursos Piloto Ingestados:** 19 (Enfoque en alta demanda laboral).
--   **Puntos de Datos Capturados:** Precio Real, ROI Proyectado, Temario, Ubicación, Modalidad y Duración.
+## 📊 Misión de Impacto
+En un mercado educativo fragmentado, **Yachachiy.ai** actúa como el faro de transparencia. No solo listamos cursos; analizamos su valor real para el futuro del estudiante.
 
 ---
-© 2026 Yachachiy.ai - Todos los derechos reservados.
+© 2026 **Yachachiy.ai** - Transformando la educación en el Perú con datos.
