@@ -1,29 +1,40 @@
 import { Suspense } from "react";
 import CourseDetailClient from "./CourseDetailClient";
 
+// Esta función es CRÍTICA para el despliegue estático en Cloudflare.
+// Debe generar los slugs limpios (sin acentos) para que coincidan con el sistema de archivos.
 export async function generateStaticParams() {
-  // En una implementación real, esto consultaría la base de datos o API.
-  // Aseguramos que los slugs estén normalizados (sin acentos, minúsculas).
-  const slugs = [
-    "data-science-piloto",
-    "ingenieria-software",
-    "maestria-en-ciencias-en-quimica-uni"
-  ];
+  const SUPABASE_URL = 'https://fmcxwoqvxatbrawwtqke.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_rTQDiEIQYGn0q5VgCdEZlA__F8fDp0E';
   
-  return slugs.map(slug => ({ slug }));
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/courses?select=slug`, {
+      headers: { 
+        'apikey': SUPABASE_ANON_KEY, 
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
+      }
+    });
+    const courses = await response.json();
+    
+    // Normalizamos los slugs (quitamos acentos y caracteres especiales)
+    return courses.map((c: { slug: string }) => ({
+      slug: c.slug
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-")
+    }));
+  } catch (error) {
+    console.error("Error generating static params:", error);
+    return [];
+  }
 }
 
-interface PageProps {
-  params: Promise<{ slug: string }>;
-}
-
-export default function CourseDetailPage({ params }: PageProps) {
-  // En Next.js 15/16, pasamos la promesa directamente al Client Component
-  // para una hidratación más robusta usando React.use()
-  // Es obligatorio envolver en Suspense cuando el Client Component usa React.use(params)
+export default async function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando detalles...</div>}>
-      <CourseDetailClient params={params} />
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Cargando detalles del programa...</div>}>
+      <CourseDetailClient slug={slug} />
     </Suspense>
   );
 }
