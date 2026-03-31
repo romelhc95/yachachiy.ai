@@ -1,8 +1,6 @@
 fastapi
-uvicorn
 sqlalchemy
 pydantic
 python-dotenv
 httpx
-geopy
 pg8000

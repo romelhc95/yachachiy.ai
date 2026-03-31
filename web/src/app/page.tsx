@@ -63,15 +63,22 @@ export default function Home() {
   });
   const [openFilterMenu, setOpenFilterMenu] = useState<string | null>(null);
 
+  const SUPABASE_URL = 'https://fmcxwoqvxatbrawwtqke.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_rTQDiEIQYGn0q5VgCdEZlA__F8fDp0E';
+
   const fetchCourses = async (search = "") => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const url = search 
-        ? `${apiUrl}/courses?name=${encodeURIComponent(search)}`
-        : `${apiUrl}/courses`;
+        ? `${SUPABASE_URL}/rest/v1/courses?name=ilike.*${encodeURIComponent(search)}*&select=*`
+        : `${SUPABASE_URL}/rest/v1/courses?select=*`;
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
       if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
       setAllCourses(data);
@@ -84,8 +91,12 @@ export default function Home() {
 
   const fetchInstitutions = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/institutions`);
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/institutions?select=*`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
       if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
       setInstitutions(data);

@@ -1,0 +1,14 @@
+{
+  "name": "yachachiy-api",
+  "main": "worker.py",
+  "compatibility_date": "2024-03-25",
+  "compatibility_flags": [
+    "python_workers"
+  ],
+  "vars": {
+    "PROJECT_ID": "fmcxwoqvxatbrawwtqke"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

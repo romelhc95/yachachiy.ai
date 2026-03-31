@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from .routes import router
+from routes import router
 import logging
 
 # Cloudflare Workers Python specific import

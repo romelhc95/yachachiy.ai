@@ -46,17 +46,25 @@ export default function CourseDetailClient({ params }: CourseDetailClientProps) 
     message: ""
   });
 
+  const SUPABASE_URL = 'https://fmcxwoqvxatbrawwtqke.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_rTQDiEIQYGn0q5VgCdEZlA__F8fDp0E';
+
   useEffect(() => {
     let isMounted = true;
     const fetchCourse = async () => {
       try {
         setLoading(true);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${apiUrl}/courses/${slug}`);
+        const url = `${SUPABASE_URL}/rest/v1/courses?slug=eq.${slug}&select=*`;
+        const response = await fetch(url, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
         if (!response.ok) throw new Error("Course not found");
         const data = await response.json();
         if (isMounted) {
-          setCourse(data);
+          setCourse(data[0] || null);
           setLoading(false);
         }
       } catch (error) {
@@ -72,11 +80,20 @@ export default function CourseDetailClient({ params }: CourseDetailClientProps) 
     e.preventDefault();
     if (!course) return;
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/leads`, {
+      const leadId = crypto.randomUUID();
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, course_id: course.id })
+        headers: { 
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({ 
+          id: leadId,
+          ...formData, 
+          course_id: course.id 
+        })
       });
       if (response.ok) setSubmitted(true);
     } catch (error) {
