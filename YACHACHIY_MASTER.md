@@ -1,27 +1,24 @@
-# YACHACHIY_MASTER: Especificación y Estado de Yachachiy.ai
+# YACHACHIY_MASTER: Especificación y Estado Final de Yachachiy.ai (2025)
 
-## Visión: "Google Flights de la Educación Tecnológica en Perú"
-## Stack: Next.js 14, FastAPI, PostgreSQL 16 (Producción) / SQLite (Desarrollo Local), Redis, Playwright.
+## Visión: "Google Flights de la Educación Superior en Perú"
+## Stack Final: Next.js 15 (Cloudflare Pages), Supabase Serverless (PostgreSQL), IA-Powered Scrapers (Playwright + AI Parser).
 
-## Roles y Responsabilidades Autónomas:
-- @planner: Director Supremo. Orquesta el workflow, crea nuevos agentes si es necesario y reevalúa el progreso.
-- @architect: Diseño de sistemas y documentación técnica (list_directory, replace).
-- @data-harvester: Extracción de datos autónoma con Playwright.
-- @ai-parser: Estandarización de datos con IA.
-- @backend-core: Desarrollo de APIs asíncronas.
-- @frontend-master: UI/UX con Shadcn/UI y Tailwind (replace).
-- @security-auditor: Filtro de seguridad (Bloqueo obligatorio).
-- @tdd-lead: Guardián de calidad (Bloqueo obligatorio).
-- @deploy-master: Experto en despliegue y resolución de errores en Cloudflare, Render y Supabase.
+## Arquitectura de Nueva Generación:
+- **Frontend & Routing:** Next.js 15 con App Router y Server Components.
+- **Data Persistence:** Supabase Cloud con RLS (Row Level Security).
+- **Security:** Bypass de backend tradicional para comunicación directa Cliente-DB con Anon Key endurecida.
+- **Ingestión de Datos:** Automatización vía Python scripts (Harvester/Parser) con UPSERT directo a la nube.
 
-## Plan de Fases:
-- Fase 1: Harvester Pilot (Completada).
-- Fase 2: Search UI & API (Completada).
-- Fase 3: Conversión (Captura de Leads y Detalle) (Completada).
-- Fase 4: Inteligencia (Cálculo de ROI Académico) (Completada).
-- Fase 5: Expansión (Comparador y Versión Mobile) (Completada).
+## Estado del Proyecto (Certificado):
+- [X] **Fase 1: Harvester Pilot** - 36 Instituciones mapeadas.
+- [X] **Fase 2: Search UI & API** - Interfaz de búsqueda ultrarrápida con Shadcn/UI.
+- [X] **Fase 3: Conversión (Leads)** - Formulario hermético protegido por RLS.
+- [X] **Fase 4: Inteligencia (ROI)** - Cálculo de retorno de inversión por curso.
+- [X] **Fase 5: Expansión** - Comparador y vista de detalle completa.
+- [X] **Certificación Final** - Validado por @tdd-lead y @security-auditor.
 
-## Reglas de Oro del Workflow:
-1. PROHIBIDO pasar a la siguiente fase sin validación 100% de @security-auditor y @tdd-lead.
-2. DOCUMENTACIÓN: Todo reporte, README y commit debe ser en ESPAÑOL.
-3. PERSISTENCIA: Realizar push a GitHub tras cada validación de fase exitosa.
+## Mapa Institucional:
+- **Instituciones:** 36.
+- **Cursos Piloto:** 19.
+- **Flujo de Lead:** POST a 'leads' verificado; GET restringido.
+

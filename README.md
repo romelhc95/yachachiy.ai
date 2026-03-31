@@ -1,106 +1,55 @@
-# Yachachiy.ai - El "Google Flights" de la Educación en Latinoamérica
+# Yachachiy.ai - Democratizando la Educación en el Perú 🇵🇪
 
-Yachachiy.ai es una plataforma diseñada para centralizar, comparar y optimizar la búsqueda de ofertas educativas en Latinoamérica, comenzando con un enfoque estratégico en el mercado peruano.
+Yachachiy.ai es una plataforma impulsada por IA diseñada para centralizar, comparar y optimizar la búsqueda de educación superior en el Perú. Utiliza un stack moderno serverless para garantizar alta disponibilidad y seguridad en el manejo de datos académicos.
 
-## 🚀 Fases del Proyecto (Completadas)
-- **Fase 1: Recolección Piloto**: Extracción de datos de universidades principales (UTEC/UPC).
-- **Fase 2: API & Search UI**: Desarrollo del backend FastAPI y buscador principal.
-- **Fase 3: Detalle & Leads**: Captura de interesados y páginas de detalle.
-- **Fase 4: ROI Académico**: Cálculo inteligente del retorno de inversión.
-- **Fase 5: Comparador & Mobile**: Herramienta de comparación y diseño responsivo.
+## 🏛️ Nueva Arquitectura (2025)
 
-## 🛠️ Cómo visualizar e interactuar con Yachachiy.ai
+El sistema ha evolucionado de una arquitectura monolítica a un modelo **Full Serverless** de alto rendimiento:
 
-### 1. Requisitos
-- Python 3.10+
+1.  **Frontend:** Next.js 15 (App Router) desplegado en **Cloudflare Pages**.
+2.  **Data Layer (Bypass de Backend):** El cliente se comunica directamente con la API REST de **Supabase** (PostgreSQL) mediante una capa de seguridad endurecida.
+3.  **Procesamiento de IA:** Scripts especializados (`ai_parser.py`, `harvester.py`) que procesan datos de instituciones peruanas y realizan el UPSERT hacia la base de datos centralizada.
+
+## 🛠️ Stack Tecnológico
+
+-   **Framework:** [Next.js](https://nextjs.org/) (React 18+)
+-   **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
+-   **Componentes UI:** [Shadcn/UI](https://ui.shadcn.com/)
+-   **Iconografía:** [Lucide React](https://lucide.dev/)
+-   **Base de Datos & Auth:** [Supabase](https://supabase.com/) (PostgreSQL)
+-   **Automatización:** Python 3.11+ (Requests, BeautifulSoup, Playwright)
+
+## 🛡️ Estándares de Seguridad
+
+Para garantizar la integridad y privacidad de los datos sin un backend intermedio, se han implementado:
+
+-   **Row Level Security (RLS):** Las tablas en Supabase tienen políticas estrictas.
+    -   `courses`: Lectura pública (`SELECT`), inserción restringida.
+    -   `leads`: Inserción pública (`INSERT`), lectura prohibida para el rol anónimo (`SELECT` retorna vacío).
+-   **Anon Key Hardening:** La clave `anon_key` está configurada para permitir solo las operaciones de negocio necesarias.
+-   **Flujo Hermético:** El flujo `Cursos -> UI -> Leads` garantiza que la información de contacto de los usuarios sea unidireccional (sólo llega a la base de datos y no es accesible desde el cliente).
+
+## 🚀 Guía de Desarrollo
+
+### Requisitos Previos
 - Node.js 18+
-- SQLite (integrado)
+- Python 3.11+ (para scrapers y procesamiento)
 
-### 2. Ejecución Local
-*   **Backend (Puerto 8000):**
-    ```powershell
-    uvicorn api.main:app --reload
-    ```
-*   **Frontend (Puerto 3000):**
-    ```powershell
-    cd web; npm run dev
-    ```
+### Local vs Producción
+1.  **Entorno Local:**
+    -   Clonar el repositorio.
+    -   Instalar dependencias: `cd web && npm install`.
+    -   Configurar variables en `.env.local` (Supabase URL y Anon Key).
+    -   Ejecutar: `npm run dev`.
+2.  **Producción:**
+    -   Despliegue automático vía GitHub Actions a **Cloudflare Pages**.
+    -   La base de datos reside en **Supabase Cloud (Región us-east-1)**.
 
-## 🚀 Despliegue en la Nube
+## 📊 Estado del Mapa Institucional (Fase 2)
 
-El proyecto está preparado para ser desplegado de forma gratuita:
-
-### ⚡ Optimización de Rendimiento y HMR (Hot Module Replacement)
-Para evitar el **'Fast Refresh Loop'** y el uso excesivo de CPU detectado en entornos de desarrollo con Next.js 15/16:
-- **Uso de Suspense**: Es obligatorio envolver los componentes que consumen `params` asíncronos (vía `React.use()`) en un límite de `<Suspense>`. Esto previene ciclos de renderizado infinitos durante la hidratación.
-- **Limpieza de Caché**: Ante comportamientos erráticos del HMR, eliminar la carpeta `.next` (`rm -rf web/.next`) para forzar una reconstrucción limpia del grafo de dependencias.
-- **Aislamiento de Escritura**: No permitir que scripts externos (Python/Bash) escriban archivos dentro de la carpeta `web/` mientras el servidor de desarrollo está activo, ya que esto dispara reconstrucciones constantes.
-
-### 1. Base de Datos (Supabase)
-- Se ha migrado la base de datos a **Supabase (PostgreSQL)**.
-- El script `scripts/migrate_db.py` puede usarse para inicializar el esquema en nuevos entornos.
-
-### 2. Backend (Render)
-- Conecta este repositorio a [Render](https://render.com).
-- Usa el archivo `render.yaml` o configura:
-  - **Build Command**: `pip install -r requirements.txt`
-  - **Start Command**: `uvicorn api.main:app --host 0.0.0.0 --port $PORT`
-  - **Env Vars**: `DATABASE_URL` (tu connection string de Supabase).
-
-### 3. Frontend (Cloudflare Pages)
-- Conecta este repositorio a [Cloudflare Pages](https://pages.cloudflare.com/).
-- **Configuración Crítica (Panel de Cloudflare):**
-  - **Framework preset**: `Next.js (App Router)`
-  - **Build command**: `npm run build`
-  - **Output directory**: `out`
-  - **Root directory**: `web`
-- **Limpieza de Entorno:** Si el build falla por "recursive call", asegúrate de que el campo 'Build command' sea estrictamente `npm run build` y no incluya scripts de despliegue recursivo.
-- **Troubleshooting de Visibilidad (URL):**
-  - **Variable $CF_PAGES_URL vacía:** Es común en el primer build o en ramas no productivas. Revisa los logs para ver el "Enlace sugerido" basado en el nombre del proyecto.
-  - **Mensaje "No URLs enabled":** Ve a **Settings > Domains** en tu proyecto de Cloudflare Pages. Verifica que el subdominio `.pages.dev` esté habilitado. Si dice **Disabled**, actívalo para que la URL sea pública.
-- **Env Vars**: `NEXT_PUBLIC_API_URL` -> `https://yachachiy-api.onrender.com`
-
-### 4. Migración de Worker a Pages (IMPORTANTE)
-Si tu URL termina en `.workers.dev` y muestra "Hello world", has desplegado un **Worker** genérico en lugar de la aplicación **Pages**. Sigue estos pasos:
-
-1.  **Eliminar el Worker**: Ve a tu panel de Cloudflare > Workers & Pages > Selecciona el worker `yachachiy` > Settings > 'Delete'.
-2.  **Crear Proyecto de Pages**:
-    - Ve a `Workers & Pages` > `Create` > `Pages` > `Connect to Git`.
-    - Selecciona tu repositorio `yachachiy_ai`.
-3.  **Configuración de Build**:
-    - **Framework preset**: `Next.js`
-    - **Root directory**: `web`
-    - **Build command**: `npm run build`
-    - **Output directory**: `out`
-4.  **Variables de Entorno**: No olvides añadir `NEXT_PUBLIC_API_URL` en la pestaña 'Settings' > 'Environment Variables' del proyecto de Pages.
-
-## 📜 Control de Versionamiento y Cambios
-Registro de hitos y modificaciones significativas en el proyecto:
-
-| Fecha | Versión | Tipo | Descripción de Cambios |
-| :--- | :--- | :--- | :--- |
-| 28/03/2026 | v1.4.1 | Performance | **HMR & CPU Fix**: Resolución crítica del 'Fast Refresh Loop' mediante el uso de `<Suspense>` y aislamiento de procesos de escritura en el frontend. |
-| 28/03/2026 | v1.4.0 | Bug Fix | **Final Fix for Reload Loop**: Implementación definitiva de `React.use()` para la resolución de `params` en Next.js 16 y optimización de la estabilidad en el ciclo de vida de `useEffect`. |
-| 28/03/2026 | v1.3.9 | Bug Fix | **Fix Infinite Loop**: Solución del bucle de recarga en el detalle de cursos mediante la correcta gestión de `params` (Promise) en Next.js 15 y limpieza de `useEffect`. |
-| 28/03/2026 | v1.3.8 | Bug Fix | **Separación Client/Server**: Refactorización de `/courses/[slug]` para corregir la coexistencia entre `'use client'` y `generateStaticParams` en exportación estática. |
-| 28/03/2026 | v1.3.7 | Infra | **Final Fixes**: Optimización de inicio no bloqueante para Render y validación de `generateStaticParams` para Cloudflare. |
-| 28/03/2026 | v1.3.6 | Infra | **Dynamic Route Fix**: Implementación de `generateStaticParams` en `/courses/[slug]` para permitir exportación estática en Cloudflare Pages. |
-| 28/03/2026 | v1.3.5 | Infra | **Static Export**: Habilitación de `output: 'export'` en Next.js y cambio de `Output directory` a `out` para Cloudflare Pages. |
-| 28/03/2026 | v1.3.4 | Infra | **Migración Worker a Pages**: Corrección de despliegue erróneo como Worker y guía de transición a Cloudflare Pages nativo. |
-| 28/03/2026 | v1.3.3 | Infra | **Troubleshooting Domain**: Guía para activar dominios .pages.dev y mejora de logs de URL en Cloudflare. |
-| 28/03/2026 | v1.3.2 | Infra | **Fix URL Visibility**: Mejora en el logging de despliegue de Cloudflare para visualizar la URL pública y solución al mensaje 'No URLs enabled'. |
-| 28/03/2026 | v1.3.1 | Infra | **Despliegue Exitoso**: Confirmación de build nativo en Cloudflare Pages. URL: [Pendiente - Verificar en panel] |
-| 28/03/2026 | v1.3.0 | Infra | **Desacoplamiento Total**: Limpieza definitiva de bindings y desacoplamiento total de OpenNext/Wrangler para despliegue nativo. |
-| 28/03/2026 | v1.2.9 | Infra | **Optimización de Build**: Desactivación de telemetría, eliminación de OpenNext y corrección de bucles infinitos en Cloudflare. |
-| 28/03/2026 | v1.2.8 | Infra | **Fix Cloudflare Entry-point**: Definición de punto de entrada OpenNext en `wrangler.jsonc` y actualización de script de build. |
-| 28/03/2026 | v1.2.7 | Infra | **Fix Cloudflare Binding**: Eliminación de binding circular 'WORKER_SELF_REFERENCE' y restauración de archivos `wrangler.jsonc`. |
-| 28/03/2026 | v1.2.6 | Infra | **Fix Despliegue**: Eliminación de trazas de Wrangler, corrección de `next.config.js` y securización de secretos en `render.yaml`. |
-| 28/03/2026 | v1.2.5 | Infra | **Simplificación Cloudflare**: Migración a preset nativo de Next.js. Eliminación de OpenNext por inestabilidad en build remoto. |
-| 28/03/2026 | v1.2.0 | Infra | **Cloud Deployment**: Configuración de Supabase (DB), Render (API) y Cloudflare Pages (Frontend). |
-| 28/03/2026 | v1.1.0 | Migración | **Rebranding total**: Migración de `amauta.ai` a `yachachiy.ai`. Actualización de APIs, base de datos (SQLite), rutas y componentes UI. |
-| 28/03/2026 | v1.0.5 | Bug Fix | Solución de `ReferenceError: ExternalLink` y corrección de `asChild prop` en componentes de Shadcn/Base-UI. |
-| 28/03/2026 | v1.0.4 | Infra | Migración de PostgreSQL a **SQLite** para facilitar la portabilidad y exploración local. |
-| 28/03/2026 | v1.0.0 | Release | Lanzamiento inicial de la plataforma con comparador de cursos y cálculo de ROI. |
+-   **Instituciones Mapeadas:** 36 (Principales universidades e institutos del Perú).
+-   **Cursos Piloto Ingestados:** 19 (Enfoque en alta demanda laboral).
+-   **Puntos de Datos Capturados:** Precio Real, ROI Proyectado, Temario, Ubicación, Modalidad y Duración.
 
 ---
-*Yachachiy.ai - Democratizando el acceso a la información educativa en LatAm.*
+© 2026 Yachachiy.ai - Todos los derechos reservados.
