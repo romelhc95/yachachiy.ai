@@ -80,7 +80,6 @@ export default function Home() {
   const fetchCourses = async (search = "") => {
     setLoading(true);
     try {
-      // Conexión Directa a Supabase para evitar errores de Render
       const url = search 
         ? `${SUPABASE_URL}/rest/v1/courses?name=ilike.*${encodeURIComponent(search)}*&select=*`
         : `${SUPABASE_URL}/rest/v1/courses?select=*`;
@@ -95,7 +94,6 @@ export default function Home() {
       setAllCourses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching courses:", error);
-      setAllCourses([]);
     } finally {
       setLoading(false);
     }
@@ -153,7 +151,7 @@ export default function Home() {
       <header className="sticky top-0 z-50 border-b border-brand-gray/50 bg-white/95 dark:bg-brand-slate/95 backdrop-blur shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-2xl font-bold tracking-tight text-brand-slate dark:text-white">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue text-white">Y</div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue text-white font-bold">Y</div>
             <span>Yachachiy<span className="text-brand-blue">.ai</span></span>
           </Link>
           <nav className="hidden md:flex gap-8 items-center">
@@ -213,8 +211,58 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Cómo Funciona */}
+      <section id="como-funciona" className="mx-auto max-w-6xl px-6 py-20 border-t border-brand-gray/20">
+        <div className="text-center mb-16">
+          <Badge className="bg-brand-blue/10 text-brand-blue mb-4 border-0">PROCESO</Badge>
+          <h2 className="text-3xl font-bold md:text-4xl mb-4">¿Cómo funciona Yachachiy?</h2>
+          <p className="text-slate-500 max-w-2xl mx-auto">Análisis de datos real para decisiones educativas objetivas.</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            { step: "01", title: "Filtra", desc: "Encuentra programas por categoría, precio o modalidad." },
+            { step: "02", title: "Compara", desc: "Analiza el ROI estimado y la malla curricular lado a lado." },
+            { step: "03", title: "Elige", desc: "Solicita información directa para dar el siguiente paso." }
+          ].map((item, i) => (
+            <div key={i} className="p-8 rounded-3xl bg-slate-50 dark:bg-zinc-900/50 border border-brand-gray/30">
+              <div className="text-4xl font-black text-brand-blue/10 mb-4">{item.step}</div>
+              <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Nosotros */}
+      <section id="nosotros" className="mx-auto max-w-6xl px-6 py-20 border-t border-brand-gray/20">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Nuestra Misión</h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-8">Ayudar a profesionales de LATAM a elegir programas educativos con métricas transparentes.</p>
+            <h2 className="text-3xl font-bold mb-6">Nuestra Visión</h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">Ser la plataforma de referencia para decisiones data-driven en la región.</p>
+          </div>
+          <div className="bg-brand-blue/5 p-8 rounded-3xl border border-brand-blue/20">
+            <h3 className="text-2xl font-bold mb-4 text-brand-blue">Propuesta de Valor</h3>
+            <p className="text-lg text-slate-700 dark:text-slate-300">Unificamos contenido y precio para que compares sin fricción.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Instituciones */}
+      <section id="instituciones" className="mx-auto max-w-6xl px-6 py-20 border-t border-brand-gray/20">
+        <h2 className="text-3xl font-bold mb-12 text-center">Instituciones Aliadas</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          {institutions.map((inst) => (
+            <div key={inst.id} className="p-6 rounded-2xl bg-slate-50 dark:bg-zinc-900/50 border border-brand-gray/30 text-center hover:border-brand-blue transition-all">
+              <span className="text-xs font-bold">{inst.name}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <footer className="bg-slate-50 dark:bg-brand-slate border-t border-brand-gray/30 py-12 text-center text-slate-500 text-sm font-bold">
-        © 2026 Yachachiy.ai - Democratizando la educación con datos reales.
+        © 2026 Yachachiy.ai - Datos para decidir mejor.
       </footer>
 
       {/* Modal Form */}
@@ -222,10 +270,10 @@ export default function Home() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-slate/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-8 relative">
             <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-full transition"><X className="h-5 w-5" /></button>
-            <h3 className="text-2xl font-bold mb-2 text-brand-slate">Recibir Recomendación</h3>
-            <p className="text-sm text-slate-500 mb-6">Dinos qué buscas y te ayudaremos a elegir.</p>
+            <h3 className="text-2xl font-bold mb-2 text-brand-slate">Solicitar Asesoría</h3>
+            <p className="text-sm text-slate-500 mb-6">Un experto te ayudará a elegir tu programa ideal.</p>
             <Input placeholder="Nombre" className="mb-4 h-12 rounded-xl" />
-            <Input placeholder="Email" className="mb-6 h-12 rounded-xl" />
+            <Input placeholder="WhatsApp" className="mb-6 h-12 rounded-xl" />
             <Button className="w-full h-12 bg-brand-blue hover:bg-brand-blue/90 text-white font-bold rounded-xl border-0 shadow-lg" onClick={() => setIsModalOpen(false)}>Enviar solicitud</Button>
           </div>
         </div>
