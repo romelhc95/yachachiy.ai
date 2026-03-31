@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import CourseDetailClient from "./CourseDetailClient";
 
-// Esta función es CRÍTICA para el despliegue estático en Cloudflare.
-// Debe generar los slugs limpios (sin acentos) para que coincidan con el sistema de archivos.
+// Generación dinámica de rutas para Cloudflare Pages
 export async function generateStaticParams() {
   const SUPABASE_URL = 'https://fmcxwoqvxatbrawwtqke.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_rTQDiEIQYGn0q5VgCdEZlA__F8fDp0E';
@@ -16,7 +15,7 @@ export async function generateStaticParams() {
     });
     const courses = await response.json();
     
-    // Normalizamos los slugs (quitamos acentos y caracteres especiales)
+    // Normalización estricta para evitar errores en el sistema de archivos de Cloudflare
     return courses.map((c: { slug: string }) => ({
       slug: c.slug
         .normalize("NFD")
@@ -30,10 +29,19 @@ export async function generateStaticParams() {
   }
 }
 
-export default async function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+// Forzamos que el componente reciba el slug ya resuelto del servidor
+export default async function CourseDetailPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const slug = params.slug;
+
+  if (!slug) return null;
+
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Cargando detalles del programa...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-brand-slate text-slate-500 font-bold">
+        Cargando programa...
+      </div>
+    }>
       <CourseDetailClient slug={slug} />
     </Suspense>
   );
