@@ -35,11 +35,11 @@ else:
     DB_USER = f"postgres.{PROJECT_ID}"
     DB_PASS = "2121146800R$."
     DB_HOST = "aws-0-us-east-1.pooler.supabase.com"
-    DB_PORT = "6543"
+    DB_PORT = "5432"
     DB_NAME = "postgres"
     
     encoded_pass = urllib.parse.quote_plus(DB_PASS)
-    DATABASE_URL = f"postgresql://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require&prepared_statement_cache_size=0"
+    DATABASE_URL = f"postgresql://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
     
     logger.info("--- INICIANDO CONEXIÓN SUPABASE CLOUD ---")
     engine_args = {
