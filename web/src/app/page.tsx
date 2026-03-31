@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Clock, ExternalLink, Filter, Navigation2, TrendingUp, CheckCircle2, ChevronDown, X, Check } from "lucide-react";
+import { Search, MapPin, Clock, ExternalLink, Filter, Navigation2, TrendingUp, CheckCircle2, ChevronDown, X, Check, GraduationCap, Briefcase, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -24,9 +24,15 @@ interface Course {
   roi_months?: number | null;
 }
 
+interface Institution {
+  id: string;
+  name: string;
+  slug: string;
+  website_url: string;
+}
+
 function parseDurationToMonths(duration: string | null): number {
   if (!duration) return 0;
-  // Handle various formats like "24 meses", "12 semanas", "1 año"
   const match = duration.match(/(\d+)\s*(mes|semana|año|month|week|year)s?/i);
   if (!match) return 0;
   const value = parseInt(match[1]);
@@ -39,9 +45,12 @@ function parseDurationToMonths(duration: string | null): number {
 
 export default function Home() {
   const [allCourses, setAllCourses] = useState<Course[]>([]);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedForCompare, setSelectedForCompare] = useState<Course[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Filter States
   const [activeFilters, setActiveFilters] = useState({
@@ -62,41 +71,40 @@ export default function Home() {
         ? `${apiUrl}/courses?name=${encodeURIComponent(search)}`
         : `${apiUrl}/courses`;
       
-      console.log(`FETCHING FROM: ${url}`);
       const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`);
-      }
-      
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
       setAllCourses(data);
     } catch (error) {
       console.error("Error fetching courses:", error);
-      // Fallback for UI if needed
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchInstitutions = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/institutions`);
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      setInstitutions(data);
+    } catch (error) {
+      console.error("Error fetching institutions:", error);
+    }
+  };
+
   useEffect(() => {
     fetchCourses();
+    fetchInstitutions();
   }, []);
 
   const filteredCourses = useMemo(() => {
     const coursesToFilter = Array.isArray(allCourses) ? allCourses : [];
     return coursesToFilter.filter((course) => {
-      // Modality filter
-      if (activeFilters.modes.length > 0) {
-        if (!activeFilters.modes.includes(course.mode)) return false;
-      }
-
-      // Type filter
-      if (activeFilters.types.length > 0) {
-        if (!activeFilters.types.includes(course.category)) return false;
-      }
-
-      // Duration filter
+      if (activeFilters.modes.length > 0 && !activeFilters.modes.includes(course.mode)) return false;
+      if (activeFilters.types.length > 0 && !activeFilters.types.includes(course.category)) return false;
+      
       if (activeFilters.durations.length > 0) {
         const months = parseDurationToMonths(course.duration);
         const matchesDuration = activeFilters.durations.some(range => {
@@ -108,15 +116,10 @@ export default function Home() {
         if (!matchesDuration) return false;
       }
 
-      // Price filter
       const price = course.price_pen;
       if (price === null) {
-        // Handle "Consultar" cases
-        // Show if "includeConsultar" is true, OR if no price filter is active
         const isPriceFilterActive = activeFilters.priceMin !== "" || activeFilters.priceMax !== "";
-        if (isPriceFilterActive && !activeFilters.includeConsultar) {
-          return false;
-        }
+        if (isPriceFilterActive && !activeFilters.includeConsultar) return false;
       } else {
         if (activeFilters.priceMin !== "" && price < parseFloat(activeFilters.priceMin)) return false;
         if (activeFilters.priceMax !== "" && price > parseFloat(activeFilters.priceMax)) return false;
@@ -126,376 +129,521 @@ export default function Home() {
     });
   }, [allCourses, activeFilters]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchCourses(searchTerm);
-  };
-
   const toggleFilter = (type: 'modes' | 'durations' | 'types', value: string) => {
     setActiveFilters(prev => ({
       ...prev,
-      [type]: prev[type].includes(value) 
-        ? prev[type].filter(v => v !== value) 
-        : [...prev[type], value]
+      [type]: prev[type].includes(value) ? prev[type].filter(v => v !== value) : [...prev[type], value]
     }));
   };
 
-  const toggleCompare = (course: Course) => {
-    if (selectedForCompare.find(c => c.id === course.id)) {
-      setSelectedForCompare(selectedForCompare.filter(c => c.id !== course.id));
-    } else {
-      if (selectedForCompare.length < 3) {
-        setSelectedForCompare([...selectedForCompare, course]);
-      }
-    }
+  const clearFilters = () => {
+    setActiveFilters({ priceMin: "", priceMax: "", modes: [], durations: [], types: [], includeConsultar: true });
   };
 
-  const clearFilters = () => {
-    setActiveFilters({
-      priceMin: "",
-      priceMax: "",
-      modes: [],
-      durations: [],
-      types: [],
-      includeConsultar: true
-    });
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'priceMin' | 'priceMax') => {
+    setActiveFilters(prev => ({ ...prev, [field]: e.target.value }));
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-zinc-950 font-sans text-slate-900 dark:text-zinc-100">
-      {/* Search Header - Inspired by Google Flights minimalist style */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 shadow-sm sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center text-white font-bold">Y</div>
-              <h1 className="text-xl font-medium tracking-tight">Yachachiy.ai</h1>
-            </Link>
+    <div className="min-h-screen bg-white dark:bg-brand-slate text-brand-slate dark:text-white font-sans selection:bg-brand-mint/30">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-brand-gray/50 bg-white/95 dark:bg-brand-slate/95 backdrop-blur shadow-sm">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center gap-2 text-2xl font-bold tracking-tight text-brand-slate dark:text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue text-white">Y</div>
+            <span>Yachachiy<span className="text-brand-blue">.ai</span></span>
+          </Link>
+          <nav className="hidden md:flex gap-8 items-center">
+            <Link href="/" className="text-sm font-medium text-brand-blue">Inicio</Link>
+            <button 
+              onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-blue transition"
+            >
+              Cómo Funciona
+            </button>
+            <button 
+              onClick={() => document.getElementById('nosotros')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-blue transition"
+            >
+              Nosotros
+            </button>
+            <button 
+              onClick={() => document.getElementById('instituciones')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-blue transition"
+            >
+              Instituciones
+            </button>
+            <Button 
+              onClick={() => setIsModalOpen(true)}
+              size="sm" 
+              className="bg-brand-mint hover:bg-brand-mint/90 text-brand-slate font-semibold rounded-xl px-5 h-9"
+            >
+              Solicitar asesoría
+            </Button>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="mx-auto max-w-6xl px-6 py-10">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-slate to-brand-blue p-10 md:p-16 text-white shadow-premium">
+          <div className="relative z-10">
+            <p className="mb-4 text-sm font-bold uppercase tracking-[0.24em] text-brand-mint">Yachachiy · Data-driven education</p>
+            <h1 className="max-w-3xl text-4xl font-bold leading-tight md:text-6xl">
+              Elige tu próximo programa con datos reales, no con promesas.
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg text-blue-100/90 leading-relaxed">
+              Compara contenido, duración, modalidad y precio en un solo lugar. Toma decisiones informadas para potenciar tu carrera profesional en el Perú.
+            </p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Button 
+                onClick={() => document.getElementById('programas')?.scrollIntoView({ behavior: 'smooth' })}
+                size="lg" 
+                className="bg-brand-mint hover:bg-brand-mint/90 text-brand-slate font-bold rounded-xl px-8 h-12 shadow-lg shadow-brand-mint/20"
+              >
+                Explorar programas
+              </Button>
+              <Button 
+                onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' })}
+                size="lg" 
+                variant="outline" 
+                className="border-white/20 hover:bg-white/10 text-white font-bold rounded-xl px-8 h-12"
+              >
+                ¿Cómo funciona?
+              </Button>
+            </div>
+          </div>
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-64 w-64 rounded-full bg-brand-mint/5 blur-3xl" />
+        </div>
+      </section>
+
+      {/* Filter Section */}
+      <section id="programas" className="mx-auto max-w-6xl px-6 -mt-8 relative z-20">
+        <div className="rounded-2xl border border-brand-gray/30 bg-white dark:bg-zinc-900/50 dark:backdrop-blur-xl p-6 shadow-xl">
+          <div className="grid gap-4 md:grid-cols-4 items-end">
+            <div className="md:col-span-2">
+              <label className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 mb-2 block">¿Qué quieres aprender?</label>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <Input 
+                  className="rounded-xl border-brand-gray bg-slate-50 dark:bg-zinc-800/50 pl-11 h-12 focus-visible:ring-brand-blue"
+                  placeholder="Buscar por programa, institución o categoría"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && fetchCourses(searchTerm)}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 mb-2 block">Modalidad</label>
+              <select 
+                className="w-full rounded-xl border-brand-gray bg-slate-50 dark:bg-zinc-800/50 px-4 h-12 text-sm focus:ring-2 focus:ring-brand-blue outline-none transition"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setActiveFilters(prev => ({ ...prev, modes: val === "Todas" ? [] : [val] }));
+                }}
+              >
+                <option>Todas</option>
+                <option>Remoto</option>
+                <option>Presencial</option>
+                <option>Híbrido</option>
+              </select>
+            </div>
+            <div>
+              <Button 
+                onClick={() => fetchCourses(searchTerm)}
+                className="w-full h-12 bg-brand-slate dark:bg-white dark:text-brand-slate hover:bg-brand-slate/90 dark:hover:bg-white/90 text-white font-bold rounded-xl transition shadow-lg"
+              >
+                Buscar ahora
+              </Button>
+            </div>
           </div>
 
-          <form onSubmit={handleSearch} className="relative flex flex-col md:flex-row gap-2 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-slate-300 dark:border-zinc-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
-            <div className="flex-1 relative flex items-center">
-              <Search className="absolute left-4 h-5 w-5 text-slate-400" />
-              <Input 
-                type="text" 
-                placeholder="¿Qué quieres estudiar?" 
-                className="pl-12 h-12 border-none bg-transparent text-lg focus-visible:ring-0 placeholder:text-slate-400"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="h-10 w-px bg-slate-200 dark:bg-zinc-700 hidden md:block self-center" />
-            <div className="flex items-center px-4 gap-2 text-slate-500 min-w-[140px]">
-              <MapPin className="h-5 w-5" />
-              <span className="text-sm font-medium">Lima, PE</span>
-            </div>
-            <Button type="submit" className="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium">
-              Explorar
-            </Button>
-          </form>
-
-          {/* Filters Bar */}
-          <div className="flex flex-wrap gap-2 mt-6">
-            <div className="relative">
+          {/* Extended Filters Toggle */}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap gap-2 relative">
               <Button 
-                variant={activeFilters.modes.length > 0 ? "default" : "outline"} 
+                variant="outline" 
                 size="sm" 
-                className="rounded-full border-slate-300 dark:border-zinc-700 text-xs h-8 px-4 gap-2"
-                onClick={() => setOpenFilterMenu(openFilterMenu === 'mode' ? null : 'mode')}
-              >
-                Modalidad {activeFilters.modes.length > 0 && `(${activeFilters.modes.length})`} <ChevronDown className="h-3 w-3" />
-              </Button>
-              {openFilterMenu === 'mode' && (
-                <div className="absolute top-full mt-2 left-0 w-48 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-xl p-3 z-50">
-                  <div className="space-y-2">
-                    {['Remoto', 'Presencial', 'Híbrido'].map(mode => (
-                      <label key={mode} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800 p-1 rounded transition-colors" onClick={() => toggleFilter('modes', mode)}>
-                        <div 
-                          className={cn(
-                            "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                            activeFilters.modes.includes(mode) ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300"
-                          )}
-                        >
-                          {activeFilters.modes.includes(mode) && <Check className="h-3 w-3" />}
-                        </div>
-                        <span className="text-sm">{mode}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="relative">
-              <Button 
-                variant={activeFilters.types.length > 0 ? "default" : "outline"} 
-                size="sm" 
-                className="rounded-full border-slate-300 dark:border-zinc-700 text-xs h-8 px-4 gap-2"
+                className={cn("rounded-lg h-8 px-3 text-xs gap-1.5", activeFilters.types.length > 0 && "bg-brand-blue/10 border-brand-blue text-brand-blue")}
                 onClick={() => setOpenFilterMenu(openFilterMenu === 'type' ? null : 'type')}
               >
-                Tipo {activeFilters.types.length > 0 && `(${activeFilters.types.length})`} <ChevronDown className="h-3 w-3" />
+                Categoría {activeFilters.types.length > 0 && `(${activeFilters.types.length})`} <ChevronDown className="h-3 w-3" />
               </Button>
-              {openFilterMenu === 'type' && (
-                <div className="absolute top-full mt-2 left-0 w-48 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-xl p-3 z-50">
-                  <div className="space-y-2">
-                    {['Curso', 'Especialidad', 'Diplomado', 'Taller', 'Programa', 'Maestría', 'Doctorado'].map(type => (
-                      <label key={type} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800 p-1 rounded transition-colors" onClick={() => toggleFilter('types', type)}>
-                        <div 
-                          className={cn(
-                            "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                            activeFilters.types.includes(type) ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300"
-                          )}
-                        >
-                          {activeFilters.types.includes(type) && <Check className="h-3 w-3" />}
-                        </div>
-                        <span className="text-sm">{type}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="relative">
               <Button 
-                variant={(activeFilters.priceMin !== "" || activeFilters.priceMax !== "") ? "default" : "outline"} 
+                variant="outline" 
                 size="sm" 
-                className="rounded-full border-slate-300 dark:border-zinc-700 text-xs h-8 px-4 gap-2"
+                className={cn("rounded-lg h-8 px-3 text-xs gap-1.5", (activeFilters.priceMin || activeFilters.priceMax) && "bg-brand-blue/10 border-brand-blue text-brand-blue")}
                 onClick={() => setOpenFilterMenu(openFilterMenu === 'price' ? null : 'price')}
               >
                 Precio <ChevronDown className="h-3 w-3" />
               </Button>
+
+              {/* Filter Popovers (Simulated) */}
+              {openFilterMenu === 'type' && (
+                <div className="absolute top-full left-0 mt-2 bg-white dark:bg-zinc-900 border border-brand-gray/30 rounded-xl shadow-2xl p-4 grid grid-cols-2 gap-2 z-50 min-w-[300px]">
+                  {['Curso', 'Especialidad', 'Diplomado', 'Programa', 'Maestría'].map(type => (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-brand-blue focus:ring-brand-blue"
+                        checked={activeFilters.types.includes(type)}
+                        onChange={() => toggleFilter('types', type)}
+                      />
+                      <span className="text-sm">{type}</span>
+                    </label>
+                  ))}
+                  <div className="col-span-2 pt-2 border-t mt-2">
+                    <Button variant="ghost" size="sm" className="w-full h-8 text-xs" onClick={() => setOpenFilterMenu(null)}>Cerrar</Button>
+                  </div>
+                </div>
+              )}
+
               {openFilterMenu === 'price' && (
-                <div className="absolute top-full mt-2 left-0 w-64 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-xl p-4 z-50">
+                <div className="absolute top-full left-1/4 mt-2 bg-white dark:bg-zinc-900 border border-brand-gray/30 rounded-xl shadow-2xl p-6 z-50 min-w-[280px]">
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-400">Min (S/)</label>
+                    <h4 className="font-bold text-sm mb-2">Rango de inversión (S/)</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Min</label>
                         <Input 
-                          type="number" 
-                          placeholder="0" 
+                          type="number"
+                          placeholder="0"
                           className="h-9 text-sm"
                           value={activeFilters.priceMin}
-                          onChange={(e) => setActiveFilters(prev => ({ ...prev, priceMin: e.target.value }))}
+                          onChange={(e) => handlePriceChange(e, 'priceMin')}
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-400">Max (S/)</label>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Max</label>
                         <Input 
-                          type="number" 
-                          placeholder="50000" 
+                          type="number"
+                          placeholder="Max"
                           className="h-9 text-sm"
                           value={activeFilters.priceMax}
-                          onChange={(e) => setActiveFilters(prev => ({ ...prev, priceMax: e.target.value }))}
+                          onChange={(e) => handlePriceChange(e, 'priceMax')}
                         />
                       </div>
                     </div>
-                    <label className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveFilters(prev => ({ ...prev, includeConsultar: !prev.includeConsultar }))}>
-                      <div 
-                        className={cn(
-                          "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                          activeFilters.includeConsultar ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300"
-                        )}
-                      >
-                        {activeFilters.includeConsultar && <Check className="h-3 w-3" />}
-                      </div>
-                      <span className="text-sm">Mostrar "A consultar"</span>
+                    <label className="flex items-center gap-2 cursor-pointer pt-2">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-brand-blue focus:ring-brand-blue"
+                        checked={activeFilters.includeConsultar}
+                        onChange={(e) => setActiveFilters(prev => ({ ...prev, includeConsultar: e.target.checked }))}
+                      />
+                      <span className="text-xs text-slate-500">Incluir programas por consultar</span>
                     </label>
                   </div>
-                </div>
-              )}
-            </div>
-
-            <div className="relative">
-              <Button 
-                variant={activeFilters.durations.length > 0 ? "default" : "outline"} 
-                size="sm" 
-                className="rounded-full border-slate-300 dark:border-zinc-700 text-xs h-8 px-4 gap-2"
-                onClick={() => setOpenFilterMenu(openFilterMenu === 'duration' ? null : 'duration')}
-              >
-                Duración {activeFilters.durations.length > 0 && `(${activeFilters.durations.length})`} <ChevronDown className="h-3 w-3" />
-              </Button>
-              {openFilterMenu === 'duration' && (
-                <div className="absolute top-full mt-2 left-0 w-48 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-xl p-3 z-50">
-                  <div className="space-y-2">
-                    {[
-                      { label: '< 6 meses', value: '<6' },
-                      { label: '6 - 12 meses', value: '6-12' },
-                      { label: '> 12 meses', value: '>12' },
-                    ].map(dur => (
-                      <label key={dur.value} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800 p-1 rounded transition-colors" onClick={() => toggleFilter('durations', dur.value)}>
-                        <div 
-                          className={cn(
-                            "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                            activeFilters.durations.includes(dur.value) ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300"
-                          )}
-                        >
-                          {activeFilters.durations.includes(dur.value) && <Check className="h-3 w-3" />}
-                        </div>
-                        <span className="text-sm">{dur.label}</span>
-                      </label>
-                    ))}
+                  <div className="pt-4 border-t mt-4">
+                    <Button className="w-full bg-brand-blue text-white h-9 rounded-lg text-sm" onClick={() => setOpenFilterMenu(null)}>Aplicar filtros</Button>
                   </div>
                 </div>
               )}
             </div>
-
-            {(activeFilters.modes.length > 0 || activeFilters.durations.length > 0 || activeFilters.types.length > 0 || activeFilters.priceMin !== "" || activeFilters.priceMax !== "") && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="rounded-full text-xs h-8 px-3 gap-1.5 text-slate-500 hover:text-indigo-600"
-                onClick={clearFilters}
-              >
-                <X className="h-3 w-3" /> Limpiar
+            {(activeFilters.modes.length > 0 || activeFilters.types.length > 0 || activeFilters.priceMin || activeFilters.priceMax) && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-500 hover:text-red-500" onClick={clearFilters}>
+                <X className="mr-1 h-3 w-3" /> Limpiar filtros
               </Button>
             )}
           </div>
         </div>
-      </div>
+      </section>
 
-      <main className="max-w-5xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-            {loading ? "Buscando..." : `${filteredCourses.length} opciones encontradas`}
-          </h2>
-          {!loading && (
-            <div className="flex items-center gap-1 text-xs text-slate-500">
-              <Navigation2 className="h-3 w-3 fill-slate-500" />
-              Ordenado por cercanía
-            </div>
-          )}
+      {/* Results Section */}
+      <main className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Programas recomendados</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+              {loading ? "Cargando ofertas..." : `Mostrando ${filteredCourses.length} programas encontrados en el Perú`}
+            </p>
+          </div>
+          <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg">
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className={cn("h-7 text-xs font-bold rounded-md transition-all", viewMode === 'grid' ? "bg-white dark:bg-zinc-700 shadow-sm" : "text-slate-500")}
+              onClick={() => setViewMode('grid')}
+            >
+              Grid
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className={cn("h-7 text-xs font-bold rounded-md transition-all", viewMode === 'list' ? "bg-white dark:bg-zinc-700 shadow-sm" : "text-slate-500")}
+              onClick={() => setViewMode('list')}
+            >
+              List
+            </Button>
+          </div>
         </div>
 
         {loading ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-24 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg animate-pulse" />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-[420px] rounded-2xl bg-slate-100 dark:bg-zinc-800 animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className={cn(
+            "grid gap-6",
+            viewMode === 'grid' ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+          )}>
             {filteredCourses.map((course) => (
-              <Card key={course.id} className={cn(
-                "group overflow-hidden border-slate-200 dark:border-zinc-800 hover:shadow-md hover:border-slate-300 dark:hover:border-zinc-700 transition-all p-0",
-                selectedForCompare.find(c => c.id === course.id) && "ring-2 ring-indigo-500 border-indigo-500"
-              )}>
-                <div className="flex flex-col md:flex-row items-stretch md:items-center p-4 md:p-5 gap-4">
-                  {/* Selection Checkbox */}
-                  <div className="hidden md:flex items-center pr-2">
+              <article 
+                key={course.id} 
+                className={cn(
+                  "group flex flex-col justify-between rounded-2xl border border-brand-gray/50 bg-white dark:bg-zinc-900/40 p-6 shadow-premium transition-all hover:border-brand-blue/30",
+                  viewMode === 'grid' ? "hover:-translate-y-1 hover:shadow-2xl" : "md:flex-row md:items-center gap-6"
+                )}
+              >
+                <div className={cn(viewMode === 'list' ? "flex-1" : "")}>
+                  <div className="mb-4 flex items-center justify-between">
+                    <Badge variant="secondary" className="bg-brand-blue/10 text-brand-blue dark:bg-brand-blue/20 font-bold border-0">
+                      {course.category}
+                    </Badge>
                     <button 
-                      onClick={() => toggleCompare(course)}
+                      onClick={() => {
+                        if (selectedForCompare.find(c => c.id === course.id)) {
+                          setSelectedForCompare(selectedForCompare.filter(c => c.id !== course.id));
+                        } else if (selectedForCompare.length < 3) {
+                          setSelectedForCompare([...selectedForCompare, course]);
+                        }
+                      }}
                       className={cn(
-                        "w-5 h-5 rounded border flex items-center justify-center transition-colors",
+                        "flex h-8 w-8 items-center justify-center rounded-full border transition-all",
                         selectedForCompare.find(c => c.id === course.id) 
-                          ? "bg-indigo-600 border-indigo-600 text-white" 
-                          : "border-slate-300 hover:border-indigo-400"
+                          ? "bg-brand-blue border-brand-blue text-white shadow-lg" 
+                          : "border-brand-gray hover:border-brand-blue hover:text-brand-blue"
                       )}
                     >
-                      {selectedForCompare.find(c => c.id === course.id) && <CheckCircle2 className="h-4 w-4" />}
+                      <CheckCircle2 className="h-4 w-4" />
                     </button>
                   </div>
 
-                  {/* Institution & Mode */}
-                  <div className="flex flex-col gap-1 min-w-[160px]">
-                    <div className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 truncate">
-                      {course.institution_name}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-slate-100 dark:bg-zinc-800 text-[10px] font-bold h-5 px-1.5 border-0 rounded text-slate-600 dark:text-zinc-400">
-                        {course.mode.toUpperCase()}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] font-bold h-5 px-1.5 border-indigo-200 text-indigo-600 dark:text-indigo-400">
-                        {course.category.toUpperCase()}
-                      </Badge>
+                  <Link href={`/courses/${course.slug}`}>
+                    <h3 className="text-xl font-bold leading-snug group-hover:text-brand-blue transition-colors">
+                      {course.name}
+                    </h3>
+                  </Link>
+                  <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                    <GraduationCap className="h-4 w-4" />
+                    {course.institution_name}
+                  </p>
+
+                  <div className={cn(
+                    "mt-6 gap-6",
+                    viewMode === 'grid' ? "space-y-3" : "flex flex-wrap items-center"
+                  )}>
+                    <div className="flex items-center gap-6 flex-wrap">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1"><Clock className="h-3 w-3" /> Duración</span>
+                        <span className="font-semibold text-sm">{course.duration || "Consultar"}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1"><Briefcase className="h-3 w-3" /> Modalidad</span>
+                        <span className="font-semibold text-sm">{course.mode}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1"><DollarSign className="h-3 w-3" /> Inversión</span>
+                        <span className="font-bold text-brand-blue dark:text-brand-mint text-sm">
+                          {course.price_pen ? `S/ ${course.price_pen.toLocaleString()}` : "Consultar"}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Divider for mobile */}
-                  <div className="h-px w-full bg-slate-100 dark:bg-zinc-800 md:hidden" />
-
-                  {/* Course Info */}
-                  <div className="flex-1 min-w-0">
-                    <Link href={`/courses/${course.slug}`}>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate mb-1 group-hover:text-indigo-600 transition-colors cursor-pointer">
-                        {course.name}
-                      </h3>
-                    </Link>
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-500 dark:text-zinc-400">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate max-w-[200px]">{course.address}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5 shrink-0" />
-                        <span>{course.duration || "N/A"}</span>
-                      </div>
-                      {course.distance_km != null && (
-                        <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium">
-                          <Navigation2 className="h-3 w-3 fill-current" />
-                          <span>{course.distance_km.toFixed(1)} km</span>
-                        </div>
-                      )}
+                  {course.roi_months != null && (
+                    <div className={cn(
+                      "mt-5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-3 flex items-center justify-between",
+                      viewMode === 'list' ? "inline-flex gap-4 px-4 py-2 mt-4" : ""
+                    )}>
+                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase">Retorno ROI</span>
+                      <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                        <TrendingUp className="h-4 w-4" /> {course.roi_months.toFixed(1)} meses
+                      </span>
                     </div>
-                  </div>
-
-                  {/* Price & Action */}
-                  <div className="flex items-center md:items-end md:flex-col justify-between md:justify-center gap-4 min-w-[140px] md:pl-6 md:border-l border-slate-100 dark:border-zinc-800">
-                    <div className="flex flex-col md:items-end">
-                      <div className="text-xl font-bold text-slate-900 dark:text-white">
-                        {course.price_pen === null ? "Consultar" : course.price_pen === 0 ? "Gratis" : `S/ ${course.price_pen.toLocaleString()}`}
-                      </div>
-                      <div className="text-[10px] text-slate-400 uppercase font-medium mb-2">Precio total</div>
-                      
-                      {course.roi_months != null && (
-                        <div className="flex flex-col md:items-end border-t border-slate-100 dark:border-zinc-800 pt-2 w-full">
-                          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                            <TrendingUp className="h-3.5 w-3.5" />
-                            {course.roi_months.toFixed(1)} meses
-                          </div>
-                          <div className="text-[10px] text-slate-400 uppercase font-medium">Recupero ROI</div>
-                        </div>
-                      )}
-                    </div>
-                    <Link 
-                      href={`/courses/${course.slug}`}
-                      className={cn(
-                        buttonVariants({ size: "sm", variant: "ghost" }),
-                        "h-9 px-4 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 gap-1.5 rounded-full border border-indigo-100 dark:border-indigo-900/50"
-                      )}
-                    >
-                      Detalle <ExternalLink className="h-3 w-3" />
-                    </Link>
-                  </div>
+                  )}
                 </div>
-              </Card>
+
+                <div className={cn(
+                  "mt-8 flex gap-3",
+                  viewMode === 'list' ? "mt-0 md:flex-col md:w-48" : ""
+                )}>
+                  <Link 
+                    href={`/courses/${course.slug}`}
+                    className="flex-1 rounded-xl border border-brand-blue/30 px-4 py-2.5 text-center text-sm font-bold text-brand-blue hover:bg-brand-blue hover:text-white transition-all shadow-sm"
+                  >
+                    Ver detalle
+                  </Link>
+                  <Button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex-1 rounded-xl bg-brand-mint hover:bg-brand-mint/90 px-4 py-2.5 text-sm font-bold text-brand-slate transition shadow-lg shadow-brand-mint/10 border-0"
+                  >
+                    Quiero info
+                  </Button>
+                </div>
+              </article>
             ))}
           </div>
         )}
 
-        {/* Floating Comparison Bar */}
-        {selectedForCompare.length > 0 && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        {!loading && filteredCourses.length === 0 && (
+          <div className="text-center py-24 bg-slate-50 dark:bg-zinc-900/50 rounded-3xl border-2 border-dashed border-brand-gray/50">
+            <div className="mx-auto w-16 h-16 bg-white dark:bg-zinc-800 rounded-2xl flex items-center justify-center shadow-sm mb-6">
+              <Search className="h-8 w-8 text-brand-blue" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">No encontramos resultados</h3>
+            <p className="text-slate-500 max-w-xs mx-auto mb-8">
+              Prueba ajustando tus filtros o buscando un término más general.
+            </p>
+            <Button variant="outline" className="rounded-xl border-brand-gray" onClick={() => { setSearchTerm(""); clearFilters(); fetchCourses(""); }}>
+              Restablecer búsqueda
+            </Button>
+          </div>
+        )}
+      </main>
+
+      {/* Cómo Funciona Section */}
+      <section id="como-funciona" className="mx-auto max-w-6xl px-6 py-20 border-t border-brand-gray/20">
+        <div className="text-center mb-16">
+          <Badge className="bg-brand-blue/10 text-brand-blue hover:bg-brand-blue/20 mb-4 px-4 py-1 rounded-full border-0">PROCESO</Badge>
+          <h2 className="text-3xl font-bold md:text-4xl mb-4">¿Cómo funciona Yachachiy?</h2>
+          <p className="text-slate-500 max-w-2xl mx-auto text-lg">
+            Nuestra plataforma utiliza IA para analizar miles de programas y ofrecerte una visión clara y objetiva para tu futuro.
+          </p>
+        </div>
+        
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            {
+              step: "01",
+              title: "Filtra y Descubre",
+              desc: "Usa nuestro buscador inteligente para encontrar programas por nombre, categoría o precio que se ajusten a tu perfil.",
+              icon: <Search className="h-6 w-6 text-brand-blue" />
+            },
+            {
+              step: "02",
+              title: "Compara con Datos",
+              desc: "Selecciona hasta 3 programas y compara su ROI estimado, malla curricular, docentes y modalidad lado a lado.",
+              icon: <TrendingUp className="h-6 w-6 text-emerald-500" />
+            },
+            {
+              step: "03",
+              title: "Toma el Control",
+              desc: "Solicita información directa o una asesoría personalizada para dar el siguiente paso en tu carrera con total seguridad.",
+              icon: <CheckCircle2 className="h-6 w-6 text-brand-mint" />
+            }
+          ].map((item, idx) => (
+            <div key={idx} className="relative group p-8 rounded-3xl bg-slate-50 dark:bg-zinc-900/50 border border-brand-gray/30 transition-all hover:border-brand-blue">
+              <div className="absolute top-6 right-8 text-4xl font-black text-brand-blue/5 group-hover:text-brand-blue/10 transition-colors">{item.step}</div>
+              <div className="mb-6 h-12 w-12 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm">
+                {item.icon}
+              </div>
+              <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        <div className="rounded-3xl border border-brand-gray/30 bg-slate-50 dark:bg-zinc-900/50 p-10 md:p-16 text-center shadow-premium">
+          <h2 className="text-3xl font-bold md:text-4xl">¿Listo para elegir con confianza?</h2>
+          <p className="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            Recibe una recomendación personalizada basada en tus objetivos profesionales y tu momento ideal para empezar.
+          </p>
+          <Button 
+            onClick={() => setIsModalOpen(true)}
+            className="mt-10 rounded-xl bg-brand-mint hover:bg-brand-mint/90 px-10 h-14 text-lg font-bold text-brand-slate shadow-xl shadow-brand-mint/20 border-0"
+          >
+            Quiero mi recomendación
+          </Button>
+        </div>
+      </section>
+
+      {/* Nosotros Section */}
+      <section id="nosotros" className="mx-auto max-w-6xl px-6 py-20 border-t border-brand-gray/20">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Nuestra Misión</h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-8">
+              Ayudar a profesionales de LATAM a elegir programas tech con métricas comparables y transparentes.
+            </p>
+            <h2 className="text-3xl font-bold mb-6">Nuestra Visión</h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+              Ser la plataforma de referencia para decisiones educativas data-driven en la región.
+            </p>
+          </div>
+          <div className="bg-brand-blue/5 dark:bg-brand-blue/10 rounded-3xl p-8 border border-brand-blue/20">
+            <h3 className="text-2xl font-bold mb-4 text-brand-blue">Propuesta de Valor</h3>
+            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed">
+              Unificamos contenido, docentes, formato y precio para que compares sin fricción y actúes rápido.
+            </p>
+            <div className="mt-8 grid grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-brand-slate p-4 rounded-xl shadow-sm">
+                <CheckCircle2 className="text-brand-mint mb-2" />
+                <p className="font-bold text-sm">Datos Reales</p>
+              </div>
+              <div className="bg-white dark:bg-brand-slate p-4 rounded-xl shadow-sm">
+                <TrendingUp className="text-brand-blue mb-2" />
+                <p className="font-bold text-sm">ROI Visible</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Institutions Section */}
+      <section id="instituciones" className="mx-auto max-w-6xl px-6 py-20 border-t border-brand-gray/20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold mb-4">Instituciones Aliadas</h2>
+          <p className="text-slate-500 max-w-2xl mx-auto">
+            Trabajamos con las mejores universidades y escuelas de tecnología del Perú para brindarte información veraz.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          {institutions.map((inst) => (
+            <div key={inst.id} className="group relative flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-50 dark:bg-zinc-900/50 border border-brand-gray/30 hover:border-brand-blue transition-all hover:shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-brand-blue/10 flex items-center justify-center text-brand-blue font-bold text-xl mb-3 group-hover:bg-brand-blue group-hover:text-white transition-colors">
+                {inst.name.charAt(0)}
+              </div>
+              <span className="text-xs font-bold text-center group-hover:text-brand-blue transition-colors">{inst.name}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Floating Comparison Bar */}
+      {selectedForCompare.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-500">
+          <div className="bg-brand-slate text-white border border-white/10 shadow-2xl rounded-2xl px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex -space-x-3">
                 {selectedForCompare.map(c => (
-                  <div key={c.id} className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-900 bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                    {c.institution_name.substring(0, 2)}
+                  <div key={c.id} className="w-10 h-10 rounded-full border-2 border-brand-slate bg-brand-blue flex items-center justify-center text-[10px] font-bold ring-2 ring-brand-mint/30">
+                    {c.institution_name.substring(0, 2).toUpperCase()}
                   </div>
                 ))}
               </div>
               <div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white">
+                <div className="text-sm font-bold">
                   {selectedForCompare.length} programa{selectedForCompare.length > 1 ? "s" : ""} seleccionado{selectedForCompare.length > 1 ? "s" : ""}
                 </div>
-                <div className="text-[10px] text-slate-500 uppercase font-medium">Compara hasta 3 opciones</div>
+                <div className="text-[10px] text-brand-mint uppercase font-bold tracking-wider">Compara y elige mejor</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-slate-500 hover:text-red-500"
+                className="text-white/60 hover:text-white hover:bg-white/10"
                 onClick={() => setSelectedForCompare([])}
               >
                 Limpiar
@@ -504,28 +652,91 @@ export default function Home() {
                 pathname: '/compare',
                 query: { ids: selectedForCompare.map(c => c.id).join(',') }
               }}>
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6">
+                <Button size="sm" className="bg-brand-mint hover:bg-brand-mint/90 text-brand-slate font-bold rounded-xl px-6 shadow-lg shadow-brand-mint/20">
                   Comparar ahora
                 </Button>
               </Link>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {!loading && filteredCourses.length === 0 && (
-          <div className="text-center py-24 bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-slate-300 dark:border-zinc-700">
-            <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-1">No hay resultados</h3>
-            <p className="text-slate-500 dark:text-zinc-400">Intenta ajustar los términos de búsqueda o filtros.</p>
-            <Button variant="link" className="text-indigo-600 mt-2" onClick={() => { setSearchTerm(""); clearFilters(); fetchCourses(""); }}>
-              Ver todos los programas
-            </Button>
+      {/* Recommendation Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-slate/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-brand-blue p-8 text-white relative">
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+                <Badge className="bg-brand-mint text-brand-slate font-bold">TOP</Badge>
+              </div>
+              <h3 className="text-2xl font-bold">Recomendación Personalizada</h3>
+              <p className="text-blue-100/80 text-sm mt-2">Dinos qué buscas y nuestro algoritmo encontrará el programa ideal para ti.</p>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-slate-500">Nombre Completo</label>
+                <Input placeholder="Ej. Juan Pérez" className="rounded-xl border-brand-gray h-11" />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-slate-500">Interés Académico</label>
+                <select className="w-full rounded-xl border border-brand-gray bg-white dark:bg-zinc-800 px-4 h-11 text-sm focus:ring-2 focus:ring-brand-blue outline-none transition">
+                  <option>Data Science & AI</option>
+                  <option>Desarrollo Web / Mobile</option>
+                  <option>Ciberseguridad</option>
+                  <option>Marketing Digital</option>
+                  <option>Gestión de Proyectos Tech</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-slate-500">Presupuesto Estimado (S/)</label>
+                <Input type="number" placeholder="Ej. 5000" className="rounded-xl border-brand-gray h-11" />
+              </div>
+
+              <Button 
+                onClick={() => {
+                  alert("¡Gracias! Pronto recibirás tu recomendación por correo.");
+                  setIsModalOpen(false);
+                }}
+                className="w-full h-12 bg-brand-blue hover:bg-brand-blue/90 text-white font-bold rounded-xl shadow-lg shadow-brand-blue/20"
+              >
+                Obtener mi recomendación
+              </Button>
+              <p className="text-center text-[10px] text-slate-400">
+                Al solicitar, aceptas nuestros términos de privacidad.
+              </p>
+            </div>
           </div>
-        )}
-      </main>
-      
-      <footer className="max-w-5xl mx-auto px-4 py-12 border-t border-slate-200 dark:border-zinc-800 text-center text-slate-400 text-sm">
-        <p>© 2026 Yachachiy.ai - Democratizando la educación superior en el Perú</p>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-slate-50 dark:bg-brand-slate border-t border-brand-gray/30 mt-12">
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="flex items-center gap-2 text-xl font-bold tracking-tight">
+              <div className="flex h-6 w-6 items-center justify-center rounded bg-brand-blue text-white text-xs">Y</div>
+              <span>Yachachiy.ai</span>
+            </div>
+            <div className="flex gap-8 text-sm font-medium text-slate-500 dark:text-slate-400">
+              <Link href="#" className="hover:text-brand-blue">Términos</Link>
+              <Link href="#" className="hover:text-brand-blue">Privacidad</Link>
+              <Link href="#" className="hover:text-brand-blue">Contacto</Link>
+            </div>
+            <p className="text-xs text-slate-400">
+              © {new Date().getFullYear()} Yachachiy.ai. Datos para decidir mejor.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );

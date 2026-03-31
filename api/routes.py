@@ -6,6 +6,28 @@ from . import models, schemas, database, utils
 
 router = APIRouter()
 
+@router.get("/institutions", response_model=None)
+async def get_institutions(db: Session = Depends(database.get_db)):
+    from fastapi.responses import JSONResponse
+    try:
+        results = db.query(models.Institution).all()
+        # Convert to list of dicts for JSONResponse
+        processed = []
+        for inst in results:
+            processed.append({
+                "id": str(inst.id),
+                "name": inst.name,
+                "slug": inst.slug,
+                "website_url": inst.website_url,
+                "address": inst.address
+            })
+        return processed
+    except Exception as e:
+        return JSONResponse(
+            status_code=200, 
+            content={"error": "db_connection_failed", "detail": str(e)}
+        )
+
 @router.get("/courses", response_model=None) # Changed to None to allow flexible error responses
 async def get_courses(
     request: Request,

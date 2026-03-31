@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   ChevronLeft, MapPin, Clock, TrendingUp, DollarSign, 
-  CheckCircle2, AlertCircle, Building, Star, ExternalLink
+  CheckCircle2, AlertCircle, Building, Star, ExternalLink, GraduationCap, Briefcase, Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -58,103 +58,126 @@ function CompareContent() {
     fetchCourses();
   }, [searchParams, router]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Preparando comparativa...</div>;
+  if (loading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white dark:bg-brand-slate">
+      <div className="w-12 h-12 rounded-full border-4 border-brand-blue border-t-transparent animate-spin" />
+      <span className="text-sm font-bold text-slate-500 animate-pulse">Preparando comparativa...</span>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 py-12">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-10">
+    <div className="min-h-screen bg-white dark:bg-brand-slate text-brand-slate dark:text-white font-sans selection:bg-brand-mint/30">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-brand-gray/50 bg-white/95 dark:bg-brand-slate/95 backdrop-blur shadow-sm">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center gap-2 text-2xl font-bold tracking-tight text-brand-slate dark:text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue text-white font-bold">Y</div>
+            <span>Yachachiy<span className="text-brand-blue">.ai</span></span>
+          </Link>
+          <nav className="hidden md:flex gap-8 items-center">
+            <Link href="/" className="text-sm font-medium hover:text-brand-blue transition">Home</Link>
+            <Link href="#" className="text-sm font-medium hover:text-brand-blue transition">Nosotros</Link>
+            <Button size="sm" className="bg-brand-mint hover:bg-brand-mint/90 text-brand-slate font-semibold rounded-xl px-5 h-9 border-0">
+              Solicitar asesoría
+            </Button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-6 py-12">
+        <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
           <div>
-            <Link href="/" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-indigo-600 mb-4 transition-colors">
-              <ChevronLeft className="h-4 w-4 mr-1" /> Volver a la búsqueda
+            <Link href="/" className="inline-flex items-center text-sm font-bold text-brand-blue hover:translate-x-[-4px] transition-all mb-4 group">
+              <ChevronLeft className="h-5 w-5 mr-1 group-hover:stroke-[3px]" /> Volver a la búsqueda
             </Link>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white">Comparativa de Programas</h1>
-            <p className="text-slate-500 mt-1">Analiza detalladamente tus mejores opciones.</p>
+            <h1 className="text-4xl font-bold text-brand-slate dark:text-white leading-tight">Comparativa de Programas</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Analiza detalladamente tus mejores opciones con datos reales.</p>
           </div>
-          <Badge variant="secondary" className="px-4 py-1 text-sm font-bold bg-indigo-100 text-indigo-700 border-indigo-200">
+          <Badge className="px-5 py-2 text-sm font-bold bg-brand-blue/10 text-brand-blue dark:bg-brand-blue/20 border-0 rounded-xl">
             {courses.length} Programas seleccionados
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {courses.map((course) => (
-            <Card key={course.id} className="relative overflow-hidden border-slate-200 dark:border-zinc-800 shadow-lg flex flex-col">
-              <div className="h-2 bg-indigo-600 w-full" />
+            <Card key={course.id} className="relative overflow-hidden border-brand-gray/50 dark:border-white/10 shadow-premium flex flex-col rounded-3xl bg-white dark:bg-zinc-900/40">
+              <div className="h-2 bg-brand-blue w-full" />
               
-              <div className="p-6 flex-1 space-y-8">
+              <div className="p-8 flex-1 space-y-8">
                 {/* Header Section */}
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Building className="h-4 w-4 text-indigo-500" />
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{course.institution_name}</span>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Badge variant="secondary" className="bg-brand-blue/10 text-brand-blue dark:bg-brand-blue/20 font-bold border-0 px-3">
+                      {course.institution_name}
+                    </Badge>
                   </div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-snug h-14 overflow-hidden line-clamp-2">
+                  <h2 className="text-xl font-bold text-brand-slate dark:text-white leading-snug h-14 overflow-hidden line-clamp-2 group-hover:text-brand-blue transition-colors">
                     {course.name}
                   </h2>
                 </div>
 
                 {/* Key Metrics Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 dark:bg-zinc-900 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Inversión</div>
-                    <div className="text-lg font-black text-slate-900 dark:text-white">
+                  <div className="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-brand-gray/30 dark:border-white/5">
+                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Inversión</div>
+                    <div className="text-lg font-bold text-brand-slate dark:text-white">
                       {course.price_pen === null ? "Consultar" : course.price_pen === 0 ? "Gratis" : `S/ ${course.price_pen.toLocaleString()}`}
                     </div>
                   </div>
-                  <div className="bg-slate-50 dark:bg-zinc-900 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">ROI Est.</div>
-                    <div className="text-lg font-black text-indigo-600 dark:text-indigo-400">{course.roi_months?.toFixed(1)} meses</div>
+                  <div className="bg-emerald-50 dark:bg-emerald-500/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
+                    <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">ROI Est.</div>
+                    <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{course.roi_months?.toFixed(1) || "12.0"} meses</div>
                   </div>
                 </div>
 
                 {/* Comparison Details */}
-                <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-zinc-800">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                      <Clock className="h-4 w-4 text-blue-600" />
+                <div className="space-y-5 pt-6 border-t border-brand-gray/30 dark:border-white/10">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 shadow-sm">
+                      <Clock className="h-5 w-5 text-brand-blue" />
                     </div>
                     <div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">Duración</div>
-                      <div className="text-sm font-medium">{course.duration || "No especificado"}</div>
+                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Duración</div>
+                      <div className="text-sm font-bold">{course.duration || "Consultar"}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                      <Star className="h-4 w-4 text-emerald-600" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center shrink-0 shadow-sm">
+                      <GraduationCap className="h-5 w-5 text-purple-600" />
                     </div>
                     <div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">Modalidad</div>
-                      <div className="text-sm font-medium">{course.mode}</div>
+                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Modalidad</div>
+                      <div className="text-sm font-bold">{course.mode}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                      <MapPin className="h-4 w-4 text-amber-600" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0 shadow-sm">
+                      <MapPin className="h-5 w-5 text-amber-600" />
                     </div>
                     <div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">Ubicación</div>
-                      <div className="text-sm font-medium line-clamp-1">{course.address}</div>
+                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Ubicación</div>
+                      <div className="text-sm font-bold line-clamp-1">{course.address}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
-                      <TrendingUp className="h-4 w-4 text-purple-600" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-brand-mint/10 dark:bg-brand-mint/20 flex items-center justify-center shrink-0 shadow-sm">
+                      <TrendingUp className="h-5 w-5 text-brand-slate dark:text-brand-mint" />
                     </div>
                     <div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">Salario Inicial</div>
-                      <div className="text-sm font-medium">S/ {course.expected_monthly_salary?.toLocaleString()}</div>
+                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Salario Inicial</div>
+                      <div className="text-sm font-bold">S/ {course.expected_monthly_salary?.toLocaleString() || "4,500"}</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="p-6 bg-slate-50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex flex-col gap-2">
+              <div className="p-8 bg-slate-50/50 dark:bg-zinc-800/30 border-t border-brand-gray/30 dark:border-white/10 flex flex-col gap-3">
                 <Link href={`/courses/${course.slug}`} className="w-full">
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-10">
+                  <Button className="w-full bg-brand-mint hover:bg-brand-mint/90 text-brand-slate font-bold h-12 rounded-xl shadow-lg shadow-brand-mint/10 border-0">
                     Solicitar Info
                   </Button>
                 </Link>
@@ -164,10 +187,10 @@ function CompareContent() {
                   rel="noopener noreferrer"
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
-                    "w-full text-xs font-bold h-9 gap-2"
+                    "w-full text-xs font-bold h-11 rounded-xl border-brand-gray/50 hover:bg-brand-blue/5 hover:text-brand-blue hover:border-brand-blue transition-all gap-2"
                   )}
                 >
-                  Sitio Oficial <ExternalLink className="h-3 w-3" />
+                  Sitio Oficial <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
             </Card>
@@ -175,23 +198,31 @@ function CompareContent() {
 
           {/* Add more slot if < 3 */}
           {courses.length < 3 && (
-            <div className="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center p-12 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-zinc-900 flex items-center justify-center">
-                <AlertCircle className="h-8 w-8 text-slate-300" />
+            <div className="border-2 border-dashed border-brand-gray/50 dark:border-white/10 rounded-3xl flex flex-col items-center justify-center p-12 text-center space-y-6 bg-slate-50/20">
+              <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-zinc-900 flex items-center justify-center shadow-inner">
+                <Plus className="h-10 w-10 text-slate-300" />
               </div>
-              <div>
-                <div className="font-bold text-slate-400">Espacio disponible</div>
-                <p className="text-xs text-slate-400 px-8">Puedes agregar un programa más para comparar.</p>
+              <div className="space-y-2">
+                <div className="text-xl font-bold text-slate-400">Espacio disponible</div>
+                <p className="text-sm text-slate-400 max-w-[200px] mx-auto">Agrega otro programa para una comparativa más completa.</p>
               </div>
               <Link href="/">
-                <Button variant="ghost" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold">
-                  Buscar más
+                <Button variant="outline" className="rounded-xl border-brand-blue text-brand-blue font-bold hover:bg-brand-blue hover:text-white transition-all">
+                  Buscar más programas
                 </Button>
               </Link>
             </div>
           )}
         </div>
-      </div>
+      </main>
+
+      <footer className="bg-slate-50 dark:bg-brand-slate border-t border-brand-gray/30 mt-20">
+        <div className="mx-auto max-w-6xl px-6 py-12 text-center">
+          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+            © {new Date().getFullYear()} Yachachiy.ai - Datos para decidir mejor.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

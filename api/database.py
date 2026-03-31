@@ -12,47 +12,59 @@ logger = logging.getLogger(__name__)
 
 load_dotenv(override=True)
 
-# --- CONFIGURACIÓN SUPABASE CLOUD (BOUNCER FRIENDLY) ---
-PROJECT_ID = "fmcxwoqvxatbrawwtqke"
-DB_USER = f"postgres.{PROJECT_ID}"
-DB_PASS = "2121146800R$."
-# Host genérico que Render SI resuelve correctamente
-DB_HOST = "aws-0-us-east-1.pooler.supabase.com"
-DB_PORT = "6543"
-DB_NAME = "postgres"
+# Detectar entorno local (MySQL) o cloud (Postgres)
+LOCAL_DB = os.getenv("LOCAL_DB", "false").lower() == "true"
+DB_HOST = os.getenv("DB_HOST", "localhost")
 
-# Codificación segura de la contraseña
-encoded_pass = urllib.parse.quote_plus(DB_PASS)
-
-# URL con parámetros para PgBouncer (indispensable para Supabase Pooler)
-DATABASE_URL = f"postgresql://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require&prepared_statement_cache_size=0"
-
-logger.info("--- INICIANDO CONEXIÓN COMPATIBLE CON SUPABASE POOLER ---")
-logger.info(f"Conectando a: {DB_HOST}")
-logger.info(f"Usuario: {DB_USER}")
-
-try:
-    # Creamos el motor con deshabilitación de sentencias preparadas para PgBouncer
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,
-        pool_recycle=300,
-        connect_args={
+if LOCAL_DB or DB_HOST in ["localhost", "127.0.0.1"]:
+    # --- CONFIGURACIÓN LOCAL (MySQL 3307) ---
+    DB_USER = "root"
+    DB_PASS = ""
+    DB_PORT = "3307"
+    DB_NAME = "yachachiy"
+    DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    
+    logger.info("--- INICIANDO CONEXIÓN LOCAL (MySQL 3307) ---")
+    engine_args = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
+else:
+    # --- CONFIGURACIÓN SUPABASE CLOUD ---
+    PROJECT_ID = "fmcxwoqvxatbrawwtqke"
+    DB_USER = f"postgres.{PROJECT_ID}"
+    DB_PASS = "2121146800R$."
+    DB_HOST = "aws-0-us-east-1.pooler.supabase.com"
+    DB_PORT = "6543"
+    DB_NAME = "postgres"
+    
+    encoded_pass = urllib.parse.quote_plus(DB_PASS)
+    DATABASE_URL = f"postgresql://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require&prepared_statement_cache_size=0"
+    
+    logger.info("--- INICIANDO CONEXIÓN SUPABASE CLOUD ---")
+    engine_args = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "connect_args": {
             "sslmode": "require",
             "connect_timeout": 30,
             "application_name": "yachachiy_prod"
         }
-    )
+    }
+
+logger.info(f"Conectando a: {DB_HOST}")
+
+try:
+    engine = create_engine(DATABASE_URL, **engine_args)
     
     # VALIDACIÓN REAL: Intentamos una consulta simple
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
-        logger.info("¡CONEXIÓN ESTABLECIDA EXITOSAMENTE CON LA NUBE!")
+        logger.info(f"¡CONEXIÓN ESTABLECIDA EXITOSAMENTE EN {'LOCAL' if (LOCAL_DB or DB_HOST in ['localhost', '127.0.0.1']) else 'NUBE'}!")
         
 except Exception as e:
-    logger.error(f"ERROR CRÍTICO DE CONEXIÓN A SUPABASE: {str(e)}")
-    # NO hay fallback a SQLite. Si falla, el sistema debe reportar el error.
-    # Usamos una URL de error para que la app no levante con data falsa.
+    logger.error(f"ERROR CRÍTICO DE CONEXIÓN: {str(e)}")
+    # Fallback to current DATABASE_URL to avoid breaking downstream
     engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
