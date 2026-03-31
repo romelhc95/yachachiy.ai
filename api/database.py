@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 # Logging de alta visibilidad
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.info("DEPLOYMENT_VERSION: 1.0.1")
 
 load_dotenv(override=True)
 
