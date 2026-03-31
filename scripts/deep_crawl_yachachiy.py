@@ -19,11 +19,28 @@ BATCH_SIZE = 5
 MAX_PROGRAMS_PER_INST = 5
 TIMEOUT = 45000
 
-def slugify(text):
+import unicodedata
+
+def slugify(text: str) -> str:
+    """
+    Normaliza un texto para usarlo como slug en URLs:
+    - Elimina acentos y caracteres especiales.
+    - Convierte a minúsculas.
+    - Reemplaza espacios y caracteres no alfanuméricos por guiones.
+    - Asegura que solo contenga [a-z0-9-].
+    """
+    if not text:
+        return ""
+    # Normalizar para descomponer caracteres acentuados
+    text = unicodedata.normalize('NFKD', text)
+    # Eliminar caracteres no ASCII (acentos)
+    text = text.encode('ascii', 'ignore').decode('ascii')
+    # Todo a minúsculas
     text = text.lower()
-    text = re.sub(r'[^\w\s-]', '', text)
-    text = re.sub(r'[\s_-]+', '-', text)
-    text = re.sub(r'^-+|-+$', '', text)
+    # Reemplazar cualquier cosa que no sea a-z0-9 por guiones
+    text = re.sub(r'[^a-z0-9]+', '-', text)
+    # Limpiar guiones duplicados y extremos
+    text = re.sub(r'-+', '-', text).strip('-')
     return text
 
 def standardize_mode(text):

@@ -2,12 +2,15 @@ import { Suspense } from "react";
 import CourseDetailClient from "./CourseDetailClient";
 
 export async function generateStaticParams() {
-  // En una implementación real, esto consultaría la base de datos o API
-  // Para el MVP/Static Export, incluimos los slugs principales conocidos
-  return [
-    { slug: "data-science-piloto" },
-    { slug: "ingenieria-software" },
+  // En una implementación real, esto consultaría la base de datos o API.
+  // Aseguramos que los slugs estén normalizados (sin acentos, minúsculas).
+  const slugs = [
+    "data-science-piloto",
+    "ingenieria-software",
+    "maestria-en-ciencias-en-quimica-uni"
   ];
+  
+  return slugs.map(slug => ({ slug }));
 }
 
 interface PageProps {

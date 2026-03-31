@@ -33,14 +33,15 @@ logger.info(f"--- INICIALIZANDO CONEXIÓN A DB ---")
 
 try:
     # Motor configurado para máxima compatibilidad con Supabase (PgBouncer)
+    connect_args = {"connect_timeout": 30}
+    if "postgresql" in DATABASE_URL:
+        connect_args["sslmode"] = "require"
+        
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
         pool_recycle=300,
-        connect_args={
-            "sslmode": "require",
-            "connect_timeout": 30
-        }
+        connect_args=connect_args
     )
     # Test opcional de lectura (solo loguea, no detiene si falla en init)
     with engine.connect() as conn:

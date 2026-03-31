@@ -37,3 +37,28 @@ def calculate_distance(point1: Tuple[float, float], point2: Tuple[float, float])
     Calculate geodesic distance between two points in km.
     """
     return geodesic(point1, point2).kilometers
+
+import unicodedata
+import re
+
+def slugify(text: str) -> str:
+    """
+    Normaliza un texto para usarlo como slug en URLs:
+    - Elimina acentos y caracteres especiales.
+    - Convierte a minúsculas.
+    - Reemplaza espacios y caracteres no alfanuméricos por guiones.
+    - Asegura que solo contenga [a-z0-9-].
+    """
+    if not text:
+        return ""
+    # Normalizar para descomponer caracteres acentuados
+    text = unicodedata.normalize('NFKD', text)
+    # Eliminar caracteres no ASCII (acentos)
+    text = text.encode('ascii', 'ignore').decode('ascii')
+    # Todo a minúsculas
+    text = text.lower()
+    # Reemplazar cualquier cosa que no sea a-z0-9 por guiones
+    text = re.sub(r'[^a-z0-9]+', '-', text)
+    # Limpiar guiones duplicados y extremos
+    text = re.sub(r'-+', '-', text).strip('-')
+    return text
