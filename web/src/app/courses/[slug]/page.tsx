@@ -1,28 +1,27 @@
 import { Suspense } from "react";
 import CourseDetailClient from "./CourseDetailClient";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 
 // Generación dinámica de rutas para Cloudflare Pages
 export async function generateStaticParams() {
-  const SUPABASE_URL = 'https://fmcxwoqvxatbrawwtqke.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_rTQDiEIQYGn0q5VgCdEZlA__F8fDp0E';
-  
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/courses?select=slug`, {
-      headers: { 
-        'apikey': SUPABASE_ANON_KEY, 
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
       }
-    });
-    const courses = await response.json();
+    });    const courses = await response.json();
     
     // Normalización estricta para evitar errores en el sistema de archivos de Cloudflare
-    return courses.map((c: { slug: string }) => ({
-      slug: c.slug
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/[^a-z0-9-]/g, "-")
-    }));
+    return courses
+      .filter((c: { slug: string }) => c.slug)
+      .map((c: { slug: string }) => ({
+        slug: c.slug
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "-")
+      }));
   } catch (error) {
     console.error("Error generating static params:", error);
     return [];

@@ -3,9 +3,15 @@ from playwright.async_api import async_playwright
 import os
 import psycopg2
 from datetime import datetime
+from dotenv import load_dotenv
 
-# Load configuration from environment variables
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_yachachiy:password_yachachiy@localhost:5432/yachachiy_db")
+# Load configuration from .env file
+load_dotenv()
+
+DATABASE_URL = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    print("Warning: DATABASE_URL not set. Database persistence will fail.")
 
 async def scrape_utec(page):
     """Pilot scraper for UTEC"""

@@ -12,21 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
-
-interface Course {
-  id: string;
-  name: string;
-  slug: string;
-  institution_name: string;
-  price_pen: number | null;
-  mode: string;
-  address: string;
-  duration: string;
-  url: string;
-  distance_km?: number | null;
-  roi_months?: number | null;
-  expected_monthly_salary?: number;
-}
+import { SUPABASE_URL, SUPABASE_ANON_KEY, type Course } from "@/lib/supabase";
 
 function CompareContent() {
   const searchParams = useSearchParams();
@@ -43,8 +29,12 @@ function CompareContent() {
 
     const fetchCourses = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${apiUrl}/courses`);
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/courses?select=*`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
         const allCourses: Course[] = await response.json();
         const selected = allCourses.filter(c => ids.includes(c.id));
         setCourses(selected);
@@ -67,23 +57,6 @@ function CompareContent() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-brand-slate text-brand-slate dark:text-white font-sans selection:bg-brand-mint/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-brand-gray/50 bg-white/95 dark:bg-brand-slate/95 backdrop-blur shadow-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 text-2xl font-bold tracking-tight text-brand-slate dark:text-white">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue text-white font-bold">Y</div>
-            <span>Yachachiy<span className="text-brand-blue">.ai</span></span>
-          </Link>
-          <nav className="hidden md:flex gap-8 items-center">
-            <Link href="/" className="text-sm font-medium hover:text-brand-blue transition">Home</Link>
-            <Link href="#" className="text-sm font-medium hover:text-brand-blue transition">Nosotros</Link>
-            <Button size="sm" className="bg-brand-mint hover:bg-brand-mint/90 text-brand-slate font-semibold rounded-xl px-5 h-9 border-0">
-              Solicitar asesoría
-            </Button>
-          </nav>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-7xl px-6 py-12">
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
           <div>
@@ -215,14 +188,6 @@ function CompareContent() {
           )}
         </div>
       </main>
-
-      <footer className="bg-slate-50 dark:bg-brand-slate border-t border-brand-gray/30 mt-20">
-        <div className="mx-auto max-w-6xl px-6 py-12 text-center">
-          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
-            © {new Date().getFullYear()} Yachachiy.ai - Datos para decidir mejor.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

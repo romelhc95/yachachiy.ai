@@ -1,8 +1,12 @@
 import pytest
 import psycopg2
 import os
+from dotenv import load_dotenv
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user_yachachiy:password_yachachiy@localhost:5432/yachachiy_db")
+# Load environment variables
+load_dotenv()
+
+DATABASE_URL = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL")
 
 @pytest.fixture(scope="module")
 def db_connection():

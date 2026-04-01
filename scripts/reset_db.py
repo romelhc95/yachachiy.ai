@@ -1,30 +1,31 @@
-from api.database import engine, Base
-from api import models
+import os
 import pymysql
+from dotenv import load_dotenv
 
-def reset_tables():
+# Load environment variables
+load_dotenv()
+
+# MySQL configuration
+DB_HOST = os.getenv("LOCAL_DB_HOST") or "localhost"
+DB_PORT = int(os.getenv("LOCAL_DB_PORT") or 3307)
+DB_USER = os.getenv("LOCAL_DB_USER") or "root"
+DB_PASS = os.getenv("LOCAL_DB_PASSWORD") or ""
+DB_NAME = os.getenv("LOCAL_DB_NAME") or "yachachiy"
+
+def reset_db():
     try:
-        # Connect to MySQL and drop tables manually to ensure clean state
-        connection = pymysql.connect(
-            host='localhost',
-            user='root',
-            password='',
-            port=3307,
-            database='yachachiy'
-        )
-        with connection.cursor() as cursor:
-            cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
-            cursor.execute("DROP TABLE IF EXISTS leads")
-            cursor.execute("DROP TABLE IF EXISTS courses")
-            cursor.execute("DROP TABLE IF EXISTS institutions")
-            cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
-        connection.close()
+        # Connect to MySQL server
+        conn = pymysql.connect(host=DB_HOST, port=DB_PORT, user=DB_USER, password=DB_PASS)
+        cursor = conn.cursor()
         
-        # Create all tables using SQLAlchemy
-        Base.metadata.create_all(bind=engine)
-        print("Tables reset and created successfully.")
+        # Drop and recreate
+        cursor.execute(f"DROP DATABASE IF EXISTS {DB_NAME}")
+        cursor.execute(f"CREATE DATABASE {DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+        
+        print(f"Database '{DB_NAME}' has been reset.")
+        conn.close()
     except Exception as e:
-        print(f"Error resetting tables: {e}")
+        print(f"Error resetting local DB: {e}")
 
 if __name__ == "__main__":
-    reset_tables()
+    reset_db()

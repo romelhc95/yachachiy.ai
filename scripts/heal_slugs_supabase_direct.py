@@ -4,57 +4,56 @@ import unicodedata
 import re
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import ssl
+
+# Load environment variables
+load_dotenv()
 
 # Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-# Direct Supabase Connection (using Pooler credentials)
-PROJECT_ID = "fmcxwoqvxatbrawwtqke"
-DB_USER = f"postgres.{PROJECT_ID}"
-DB_PASS = "2121146800R$."
-DB_HOST = "aws-0-us-east-1.pooler.supabase.com"
-DB_PORT = "6543"
-DB_NAME = "postgres"
-
-DATABASE_URL = f"postgresql+pg8000://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
+# Direct Supabase Connection (using environment variables)
+DATABASE_URL = os.getenv("SUPABASE_DB_URL")
 
 def slugify(text: str) -> str:
     if not text:
         return ""
-    # Normalize unicode to decompose combined characters
     text = unicodedata.normalize('NFKD', str(text))
-    # Encode to ASCII and decode back, ignoring non-ASCII characters
     text = text.encode('ascii', 'ignore').decode('ascii')
-    # Lowercase
     text = text.lower()
-    # Replace non-alphanumeric with hyphens
     text = re.sub(r'[^a-z0-9]+', '-', text)
-    # Strip leading/trailing hyphens and multiple hyphens
     text = re.sub(r'-+', '-', text).strip('-')
     return text
 
 def heal_slugs():
-    print(f"Connecting to Supabase at {DB_HOST}...")
+    if not DATABASE_URL:
+        print("Error: SUPABASE_DB_URL not set in .env")
+        return
+
+    print("Connecting to Supabase...")
     try:
-        engine = create_engine(DATABASE_URL)
+        # Configuration for pg8000 + SSL if needed
+        connect_args = {}
+        if "pg8000" in DATABASE_URL:
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+            connect_args["ssl_context"] = ssl_context
+
+        engine = create_engine(DATABASE_URL, connect_args=connect_args)
         Session = sessionmaker(bind=engine)
         session = Session()
         
         print("Fetching courses...")
-        # Get all courses from Supabase
         result = session.execute(text("SELECT id, name, slug FROM courses")).fetchall()
         
         print(f"Found {len(result)} courses.")
-        print("--- BEFORE HEALING ---")
-        for row in result:
-            print(f"ID: {row[0]}, Slug: {row[2]}")
-            
-        print("\n--- HEALING PROCESS ---")
+        
         updated_count = 0
         for row in result:
             course_id = row[0]
             old_slug = row[2]
-            # Simple normalization of the current slug (it might already have the institution suffix)
             new_slug = slugify(old_slug)
             
             if old_slug != new_slug:
@@ -68,11 +67,6 @@ def heal_slugs():
         session.commit()
         print(f"\nSuccessfully updated {updated_count} slugs.")
         
-        print("\n--- AFTER HEALING ---")
-        final_result = session.execute(text("SELECT name, slug FROM courses")).fetchall()
-        for row in final_result:
-            print(f"Name: {row[0]} | Slug: {row[1]}")
-            
     except Exception as e:
         print(f"Error: {e}")
     finally:

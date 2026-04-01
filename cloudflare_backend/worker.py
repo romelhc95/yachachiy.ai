@@ -32,11 +32,19 @@ app.add_middleware(
 # --- DATABASE SETUP ---
 Base = declarative_base()
 
-# Credentials for fmcxwoqvxatbrawwtqke
-PROJECT_ID = "fmcxwoqvxatbrawwtqke"
-DEFAULT_DB_URL = f"postgresql+pg8000://postgres.{PROJECT_ID}:{urllib.parse.quote('2121146800R$.')}@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&prepared_statement_cache_size=0"
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    # During local development without environment variables set in the shell
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
+    except ImportError:
+        pass
 
-DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is not set")
+
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
 

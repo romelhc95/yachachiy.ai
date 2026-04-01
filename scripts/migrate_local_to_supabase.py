@@ -4,26 +4,44 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import sys
+import ssl
+
+# Load environment variables
+load_dotenv()
 
 # Add root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from api.models import Base, Institution, Course
+# Ensure cloudflare_backend is in path for models
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../cloudflare_backend')))
+
+# We try to import models from the cloudflare_backend/worker.py since it has the SQLAlchemy definitions
+try:
+    from worker import Base, Institution, Course
+except ImportError:
+    print("Warning: Could not import models from worker.py. Migration might fail.")
 
 def migrate():
-    # Configuration
-    LOCAL_URL = "mysql+pymysql://root@localhost:3307/yachachiy"
-    REMOTE_URL = "postgresql://postgres:2121146800R$.@db.fmcxwoqvxatbrawwtqke.supabase.co:5432/postgres"
+    # Configuration from .env
+    LOCAL_URL = os.getenv("LOCAL_DATABASE_URL") or "mysql+pymysql://root@localhost:3307/yachachiy"
+    REMOTE_URL = os.getenv("SUPABASE_DB_URL")
     
+    if not REMOTE_URL:
+        print("Error: SUPABASE_DB_URL not set in .env")
+        return
+
     print("--- INICIANDO MIGRACIÓN LOCAL -> SUPABASE ---")
     
+    # SSL context for Supabase if using pg8000
+    connect_args = {}
+    if "pg8000" in REMOTE_URL:
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        connect_args["ssl_context"] = ssl_context
+
     # Engines
     local_engine = create_engine(LOCAL_URL)
-    remote_engine = create_engine(REMOTE_URL)
-    
-    # Create tables in remote if not exist
-    print("Limpiando y recreando tablas en Supabase para asegurar el esquema...")
-    Base.metadata.drop_all(bind=remote_engine)
-    Base.metadata.create_all(bind=remote_engine)
+    remote_engine = create_engine(REMOTE_URL, connect_args=connect_args)
     
     # Sessions
     LocalSession = sessionmaker(bind=local_engine)
@@ -39,7 +57,6 @@ def migrate():
         print(f"Encontradas {len(local_institutions)} instituciones localmente.")
         
         for inst in local_institutions:
-            # Check if exists in remote by slug or id
             existing = remote_session.query(Institution).filter_by(slug=inst.slug).first()
             if not existing:
                 new_inst = Institution(
@@ -55,7 +72,6 @@ def migrate():
                 )
                 remote_session.add(new_inst)
             else:
-                # Update existing
                 existing.name = inst.name
                 existing.website_url = inst.website_url
                 existing.location_lat = inst.location_lat
@@ -72,7 +88,6 @@ def migrate():
         print(f"Encontrados {len(local_courses)} cursos localmente.")
         
         for course in local_courses:
-            # Check if exists in remote by institution_id, name, slug
             existing = remote_session.query(Course).filter_by(
                 institution_id=course.institution_id,
                 name=course.name,
@@ -106,22 +121,10 @@ def migrate():
                 remote_session.add(new_course)
             else:
                 # Update
-                existing.price_pen = course.price_pen
-                existing.mode = course.mode
-                existing.address = course.address
-                existing.duration = course.duration
-                existing.category = course.category
-                existing.url = course.url
-                existing.description = course.description
-                existing.syllabus = course.syllabus
-                existing.target_audience = course.target_audience
-                existing.requirements = course.requirements
-                existing.certification = course.certification
-                existing.start_date = course.start_date
-                existing.benefits = course.benefits
-                existing.expected_monthly_salary = course.expected_monthly_salary
-                existing.last_scraped_at = course.last_scraped_at
-                existing.updated_at = course.updated_at
+                for attr in ['price_pen', 'mode', 'address', 'duration', 'category', 'url', 'description', 
+                            'syllabus', 'target_audience', 'requirements', 'certification', 'start_date', 
+                            'benefits', 'expected_monthly_salary', 'last_scraped_at', 'updated_at']:
+                    setattr(existing, attr, getattr(course, attr))
         
         remote_session.commit()
         print("Cursos migrados/sincronizados.")
@@ -130,8 +133,6 @@ def migrate():
     except Exception as e:
         remote_session.rollback()
         print(f"ERROR DURANTE LA MIGRACIÓN: {e}")
-        import traceback
-        traceback.print_exc()
     finally:
         local_session.close()
         remote_session.close()

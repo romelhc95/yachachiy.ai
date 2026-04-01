@@ -30,6 +30,9 @@ def verify_ingestion():
     print("\n--- Check mandatory fields ---")
     fields = ['name', 'institution_id', 'price_pen', 'mode', 'category', 'url']
     for field in fields:
+        # Use a whitelist check for identifiers if they must be dynamic
+        if field not in ['name', 'institution_id', 'price_pen', 'mode', 'category', 'url', 'slug', 'address', 'duration']:
+            continue
         cursor.execute(f"SELECT count(*) FROM courses WHERE {field} IS NULL OR {field} = ''")
         count = cursor.fetchone()[0]
         if count > 0:
